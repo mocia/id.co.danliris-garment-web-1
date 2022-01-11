@@ -1,5 +1,6 @@
 ﻿using Barebone.Controllers;
 using Infrastructure.Data.EntityFrameworkCore.Utilities;
+using Manufactures.Domain.GarmentSample.SampleSewingIns.Commands;
 using Manufactures.Domain.GarmentSample.SampleSewingIns.Repositories;
 using Manufactures.Dtos.GarmentSample.SampleSewingIns;
 using Microsoft.AspNetCore.Authorization;
@@ -8,6 +9,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -117,27 +119,27 @@ namespace Manufactures.Controllers.Api.GarmentSample
             });
         }
 
-        //[HttpPut("update-dates")]
-        //public async Task<IActionResult> UpdateDates([FromBody]UpdateDatesGarmentSampleSewingInCommand command)
-        //{
-        //    VerifyUser();
+        [HttpPut("update-dates")]
+        public async Task<IActionResult> UpdateDates([FromBody]UpdateDatesGarmentSampleSewingInCommand command)
+        {
+            VerifyUser();
 
-        //    if (command.Date == null || command.Date == DateTimeOffset.MinValue)
-        //        return BadRequest(new
-        //        {
-        //            code = HttpStatusCode.BadRequest,
-        //            error = "Tanggal harus diisi"
-        //        });
-        //    else if (command.Date.Date > DateTimeOffset.Now.Date)
-        //        return BadRequest(new
-        //        {
-        //            code = HttpStatusCode.BadRequest,
-        //            error = "Tanggal tidak boleh lebih dari hari ini"
-        //        });
+            if (command.Date == null || command.Date == DateTimeOffset.MinValue)
+                return BadRequest(new
+                {
+                    code = HttpStatusCode.BadRequest,
+                    error = "Tanggal harus diisi"
+                });
+            else if (command.Date.Date > DateTimeOffset.Now.Date)
+                return BadRequest(new
+                {
+                    code = HttpStatusCode.BadRequest,
+                    error = "Tanggal tidak boleh lebih dari hari ini"
+                });
 
-        //    var order = await Mediator.Send(command);
+            var order = await Mediator.Send(command);
 
-        //    return Ok();
-        //}
+            return Ok();
+        }
     }
 }

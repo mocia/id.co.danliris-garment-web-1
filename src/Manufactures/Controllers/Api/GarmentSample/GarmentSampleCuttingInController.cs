@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -178,6 +179,29 @@ namespace Manufactures.Controllers.Api.GarmentSample
                 size,
                 count
             });
+        }
+
+        [HttpPut("update-dates")]
+        public async Task<IActionResult> UpdateDates([FromBody]UpdateDatesGarmentSampleCuttingInCommand command)
+        {
+            VerifyUser();
+
+            if (command.Date == null || command.Date == DateTimeOffset.MinValue)
+                return BadRequest(new
+                {
+                    code = HttpStatusCode.BadRequest,
+                    error = "Tanggal harus diisi"
+                });
+            else if (command.Date.Date > DateTimeOffset.Now.Date)
+                return BadRequest(new
+                {
+                    code = HttpStatusCode.BadRequest,
+                    error = "Tanggal tidak boleh lebih dari hari ini"
+                });
+
+            var order = await Mediator.Send(command);
+
+            return Ok();
         }
     }
 }

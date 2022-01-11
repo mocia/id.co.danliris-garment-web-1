@@ -245,5 +245,52 @@ namespace Manufactures.Tests.Controllers.Api.GarmentSample
             // Assert
             Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.GetType().GetProperty("ContentType").GetValue(result, null));
         }
+
+        [Fact]
+        public async Task Put_Dates_StateUnderTest_ExpectedBehavior()
+        {
+            // Arrange
+            var unitUnderTest = CreateGarmentSamplePreparingController();
+            Guid sewingOutGuid = Guid.NewGuid();
+            List<string> ids = new List<string>();
+            ids.Add(sewingOutGuid.ToString());
+
+            UpdateDatesGarmentSamplePreparingCommand command = new UpdateDatesGarmentSamplePreparingCommand(ids, DateTimeOffset.Now);
+            _MockMediator
+                .Setup(s => s.Send(command, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+
+            // Act
+            var result = await unitUnderTest.UpdateDates(command);
+
+            // Assert
+            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(result));
+        }
+
+        [Fact]
+        public async Task Put_Dates_StateUnderTest_ExpectedBehavior_BadRequest()
+        {
+            // Arrange
+            var unitUnderTest = CreateGarmentSamplePreparingController();
+            Guid sewingOutGuid = Guid.NewGuid();
+            List<string> ids = new List<string>();
+            ids.Add(sewingOutGuid.ToString());
+
+            UpdateDatesGarmentSamplePreparingCommand command = new UpdateDatesGarmentSamplePreparingCommand(ids, DateTimeOffset.Now.AddDays(3));
+
+            // Act
+            var result = await unitUnderTest.UpdateDates(command);
+
+            // Assert
+            Assert.Equal((int)HttpStatusCode.BadRequest, GetStatusCode(result));
+
+            UpdateDatesGarmentSamplePreparingCommand command2 = new UpdateDatesGarmentSamplePreparingCommand(ids, DateTimeOffset.MinValue);
+
+            // Act
+            var result1 = await unitUnderTest.UpdateDates(command2);
+
+            // Assert
+            Assert.Equal((int)HttpStatusCode.BadRequest, GetStatusCode(result1));
+        }
     }
 }

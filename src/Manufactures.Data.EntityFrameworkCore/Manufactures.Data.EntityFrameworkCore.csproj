@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Manufactures.Domain\Manufactures.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="GarmentSample\SampleFinishingOuts\Repositories\" />
+  </ItemGroup>
+
 </Project>
