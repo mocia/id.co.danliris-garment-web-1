@@ -82,7 +82,25 @@ namespace DanLiris.Admin.Web
             
         }
 
-		public void RegisterSalesDataSettings()
+        public void RegisterPackingInventoryDataSettings()
+        {
+            if (!configuration.GetSection("DanLirisSettings").Exists())
+            {
+                PackingInventoryDataSettings.Endpoint = configuration.GetValue<string>("PackingInventoryDataEndpoint") ?? configuration["PackingInventoryDataEndpoint"];
+                PackingInventoryDataSettings.TokenEndpoint = configuration.GetValue<string>("TokenEndpoint") ?? configuration["TokenEndpoint"];
+                PackingInventoryDataSettings.Username = configuration.GetValue<string>("Username") ?? configuration["Username"];
+                PackingInventoryDataSettings.Password = configuration.GetValue<string>("Password") ?? configuration["Password"];
+            }
+            else
+            {
+                PackingInventoryDataSettings.Endpoint = this.configuration.GetSection("DanLirisSettings").GetValue<string>("PackingInventoryDataEndpoint");
+                PackingInventoryDataSettings.TokenEndpoint = this.configuration.GetSection("DanLirisSettings").GetValue<string>("TokenEndpoint");
+                PackingInventoryDataSettings.Username = this.configuration.GetSection("DanLirisSettings").GetValue<string>("Username");
+                PackingInventoryDataSettings.Password = this.configuration.GetSection("DanLirisSettings").GetValue<string>("Password");
+            }
+        }
+
+        public void RegisterSalesDataSettings()
 		{
 			if (!configuration.GetSection("DanLirisSettings").Exists())
 			{
@@ -131,6 +149,7 @@ namespace DanLiris.Admin.Web
         {
             RegisterMasterDataSettings();
             RegisterPurchasingDataSettings();
+            RegisterPackingInventoryDataSettings();
             RegisterSalesDataSettings();
             RegisterCustomsDataSettings();
             RegisterEndpoint();
@@ -141,6 +160,7 @@ namespace DanLiris.Admin.Web
             services.AddSingleton<IMemoryCacheManager, MemoryCacheManager>()
                     .AddSingleton<ICoreClient, CoreClient>()
                     .AddSingleton<IPurchasingClient, PurchasingClient>()
+                    .AddSingleton<IPackingInventoryClient, PackingInventoryClient>()
                     .AddSingleton<IHttpClientService, HttpClientService>();
             //services.Configure<MasterDataSettings>(options =>
             //{

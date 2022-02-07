@@ -281,6 +281,23 @@ namespace Barebone.Controllers
             return garmentUnitExpenditureNoteResponse.EnsureSuccessStatusCode().ToString();
         }
 
+        public async Task<string> SetIsSampleExpenditureGood(string invoiceNo, bool isSampleExpenditureGood)
+        {
+            var garmentPackingListUri = PackingInventoryDataSettings.Endpoint + $"garment-shipping/packing-lists/setIsGarmentSampleExpenditureGood";
+            var garmentPackingListResponse = await _http.PutAsync(garmentPackingListUri, WorkContext.Token, new StringContent(JsonConvert.SerializeObject(new { InvoiceNo = invoiceNo, IsSampleExpenditureGood = isSampleExpenditureGood }), Encoding.UTF8, "application/json"));
+
+            /*SingleGarmentPackingListResult packingListResult = new SingleGarmentPackingListResult();
+            if (garmentPackingListResponse.EnsureSuccessStatusCode().IsSuccessStatusCode)
+            {
+                packingListResult = JsonConvert.DeserializeObject<SingleGarmentPackingListResult>(await garmentPackingListResponse.Content.ReadAsStringAsync());
+            }
+            else
+            {
+                await SetIsSampleExpenditureGood(invoiceNo, isSampleExpenditureGood);
+            }*/
+            return garmentPackingListResponse.EnsureSuccessStatusCode().ToString(); ;
+        }
+
         protected ProductResult GetGarmentProducts(string keyword = null)
         {
             var masterProductUri = MasterDataSettings.Endpoint + $"master/garmentProducts?size={int.MaxValue}&keyword={keyword}";

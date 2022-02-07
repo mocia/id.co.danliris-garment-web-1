@@ -1,4 +1,6 @@
 ﻿using Barebone.Tests;
+using FluentAssertions;
+using Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries;
 using Manufactures.Controllers.Api.GarmentSample;
 using Manufactures.Domain.GarmentSample.SampleFinishingIns.Repositories;
 using Manufactures.Domain.GarmentSample.SampleFinishingOuts;
@@ -12,6 +14,7 @@ using Moq;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
@@ -364,6 +367,54 @@ namespace Manufactures.Tests.Controllers.Api.GarmentSample
 
             // Assert
             Assert.Equal((int)HttpStatusCode.BadRequest, GetStatusCode(result1));
+        }
+
+        [Fact]
+        public async Task GetMonitoringBehavior()
+        {
+            var unitUnderTest = CreateGarmentSampleFinishingOutController();
+
+            _MockMediator
+                .Setup(s => s.Send(It.IsAny<GetSampleFinishingMonitoringQuery>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new GarmentSampleFinishingMonitoringListViewModel());
+
+            // Act
+            var result = await unitUnderTest.GetMonitoring(1, DateTime.Now, DateTime.Now, 1, 25, "{}");
+
+            // Assert
+            GetStatusCode(result).Should().Equals((int)HttpStatusCode.OK);
+        }
+
+        [Fact]
+        public async Task GetXLSBehavior()
+        {
+            var unitUnderTest = CreateGarmentSampleFinishingOutController();
+
+            _MockMediator
+                .Setup(s => s.Send(It.IsAny<GetXlsSampleFinishingQuery>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new MemoryStream());
+
+            // Act
+            var result = await unitUnderTest.GetXls(1, DateTime.Now, DateTime.Now, "", 1, 25, "{}");
+
+            // Assert
+            Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.GetType().GetProperty("ContentType").GetValue(result, null));
+            ;
+        }
+
+        [Fact]
+        public async Task GetXLS_Throws_Exception()
+        {
+            var unitUnderTest = CreateGarmentSampleFinishingOutController();
+
+            _MockMediator
+                .Setup(s => s.Send(It.IsAny<GetXlsSampleFinishingQuery>(), It.IsAny<CancellationToken>()))
+                .Throws(new Exception());
+
+            // Assert
+            var result = await unitUnderTest.GetXls(1, DateTime.Now, DateTime.Now, "", 1, 25, "{}");
+            Assert.Equal((int)HttpStatusCode.InternalServerError, GetStatusCode(result));
+
         }
     }
 }

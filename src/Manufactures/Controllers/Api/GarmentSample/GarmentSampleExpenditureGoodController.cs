@@ -170,6 +170,8 @@ namespace Manufactures.Controllers.Api.GarmentSample
 
                 var order = await Mediator.Send(command);
 
+                await SetIsSampleExpenditureGood(order.Invoice, true);
+
                 return Ok(order.Identity);
             }
             catch (Exception e)
@@ -187,7 +189,25 @@ namespace Manufactures.Controllers.Api.GarmentSample
 
             VerifyUser();
 
+            var invoice = _garmentExpenditureGoodRepository.Find(o => command.Identity == o.Identity).Select(s => s.Invoice).Single();
+
             var order = await Mediator.Send(command);
+            if (invoice != command.Invoice)
+            {
+                var isExist = _garmentExpenditureGoodRepository.Find(o => o.Invoice == invoice).SingleOrDefault();
+                if (isExist == null)
+                {
+                    await SetIsSampleExpenditureGood(invoice, false);
+                    await SetIsSampleExpenditureGood(command.Invoice, true);
+                }
+                else
+                {
+                    await SetIsSampleExpenditureGood(command.Invoice, true);
+                }
+            } else
+            {
+                await SetIsSampleExpenditureGood(command.Invoice, true);
+            }
 
             return Ok(order.Identity);
         }
@@ -212,8 +232,16 @@ namespace Manufactures.Controllers.Api.GarmentSample
             Guid guid = Guid.Parse(id);
 
             VerifyUser();
+            var invoice = _garmentExpenditureGoodRepository.Find(o => guid == o.Identity).Select(s => s.Invoice).Single();
 
             RemoveGarmentSampleExpenditureGoodCommand command = new RemoveGarmentSampleExpenditureGoodCommand(guid);
+
+            var isExist = _garmentExpenditureGoodRepository.Find(o => o.Invoice == invoice).SingleOrDefault();
+            if (isExist == null)
+            {
+                await SetIsSampleExpenditureGood(invoice, false);
+            }
+
             var order = await Mediator.Send(command);
 
             return Ok(order.Identity);
