@@ -246,7 +246,6 @@ namespace Manufactures.Application.GarmentSample.GarmentMonitoringSampleStockFlo
                              Count = group.Sum(s =>  s.CuttingInQuantity)
                          });
 
-
             var queryGroup = (from a in ( from aa in garmentCuttingOutRepository.Query
                                           where (request.ro == null || (request.ro != null && request.ro != "" && aa.RONo == request.ro))
                                           select new {aa.RONo,aa.ComodityId,aa.ComodityName, aa.Article })
