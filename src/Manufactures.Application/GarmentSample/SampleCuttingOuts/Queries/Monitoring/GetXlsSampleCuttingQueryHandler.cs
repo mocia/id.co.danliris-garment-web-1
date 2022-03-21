@@ -284,9 +284,10 @@ namespace Manufactures.Application.GarmentSample.SampleCuttingOuts.Queries.Monit
                     fc = Math.Round(item.Fc, 2),
                     cuttingQtyMeter = Math.Round(item.Fc * item.CuttingQtyPcs, 2),
                     price = Math.Round(Convert.ToDecimal(item.bPrice), 2) * Convert.ToDecimal(Math.Round(item.Fc, 2)),
-                    buyerCode = item.buyer
+                    buyerCode = item.buyer,
+					nominal = Convert.ToDecimal(item.Stock + item.CuttingQtyPcs - item.Expenditure ) * Math.Round(Convert.ToDecimal(item.bPrice), 2) * Convert.ToDecimal(Math.Round(item.Fc, 2))
 
-                };
+				};
                 monitoringCuttingDtos.Add(cuttingDto);
             }
             var data = from a in monitoringCuttingDtos
@@ -330,68 +331,68 @@ namespace Manufactures.Application.GarmentSample.SampleCuttingOuts.Queries.Monit
             var reportDataTable = new DataTable();
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "RO JOB", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Article", DataType = typeof(string) });
-            //reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Kode Barang", DataType = typeof(string) });
+            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Kode Barang", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Kode Buyer", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Qty Order", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Style", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "FC", DataType = typeof(double) });
-            //reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Hours", DataType = typeof(double) });
+            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Hours", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Hasil Potong (M)", DataType = typeof(double) });
-            //reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Harga (M)", DataType = typeof(double) });
+            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Harga (M)", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Stock Awal", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Hasil Potong", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Barang Keluar", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Sisa", DataType = typeof(double) });
-            //reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Sisa Nominal", DataType = typeof(double) });
+            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Sisa Nominal", DataType = typeof(double) });
             int counter = 5;
 
-            if (listViewModel.garmentMonitorings.Count > 0)
-            {
-                foreach (var report in listViewModel.garmentMonitorings)
-                {
-                    reportDataTable.Rows.Add(report.roJob, report.article, report.buyerCode, report.qtyOrder, report.style, Math.Round(report.fc), report.cuttingQtyMeter,  report.stock, report.cuttingQtyPcs, report.expenditure, report.remainQty);
-                    counter++;
-                }
-            }
-            using (var package = new ExcelPackage())
-            {
-                var worksheet = package.Workbook.Worksheets.Add("Sheet 1");
+			if (listViewModel.garmentMonitorings.Count > 0)
+			{
+				foreach (var report in listViewModel.garmentMonitorings)
+				{
+					reportDataTable.Rows.Add(report.roJob, report.article, report.productCode, report.buyerCode, report.qtyOrder, report.style, Math.Round(report.fc), report.hours, report.cuttingQtyMeter, Math.Round(report.price, 2), report.stock, report.cuttingQtyPcs, report.expenditure, report.remainQty, report.nominal);
+					counter++;
 
-                worksheet.Column(5).Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
-                worksheet.Cells["E" + 2 + ":E" + counter + ""].Style.Numberformat.Format = "#,##0.00";
-                worksheet.Cells["G" + 6 + ":K" + counter + ""].Style.Numberformat.Format = "#,##0.00";
-                worksheet.Cells["G" + 6 + ":K" + counter + ""].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
-                worksheet.Cells["A" + 5 + ":K" + counter + ""].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-                worksheet.Cells["A" + 5 + ":K" + counter + ""].Style.Border.Top.Style = ExcelBorderStyle.Thin;
-                worksheet.Cells["A" + 5 + ":K" + counter + ""].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-                worksheet.Cells["A" + 5 + ":K" + counter + ""].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-                worksheet.Cells["H" + (counter) + ":K" + (counter) + ""].Style.Font.Bold = true;
-                worksheet.Cells["A" + 1 + ":K" + 1 + ""].Style.Font.Bold = true;
-                worksheet.Cells["A1"].Value = "Report Cutting";
-                worksheet.Cells["A" + 1 + ":K" + 1 + ""].Merge = true;
-                worksheet.Cells["A2"].Value = "Periode " + dateFrom.ToString("dd-MM-yyyy") + " s/d " + dateTo.ToString("dd-MM-yyyy");
-                worksheet.Cells["A3"].Value = "Konfeksi " + _unitName;
-                worksheet.Cells["A" + 1 + ":K" + 1 + ""].Merge = true;
-                worksheet.Cells["A" + 2 + ":K" + 2 + ""].Merge = true;
-                worksheet.Cells["A" + 3 + ":K" + 3 + ""].Merge = true;
-                worksheet.Cells["A" + 1 + ":K" + 3 + ""].Style.Font.Size = 15;
-                worksheet.Cells["A" + 1 + ":K" + 5 + ""].Style.Font.Bold = true;
-                worksheet.Cells["A" + 1 + ":K" + 5 + ""].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                worksheet.Cells["A" + 1 + ":K" + 5 + ""].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                worksheet.Cells["A5"].LoadFromDataTable(reportDataTable, true);
-				worksheet.Cells.AutoFitColumns();
-                var stream = new MemoryStream();
-                //if (request.type != "bookkeeping")
-                //{
-                //    worksheet.Column(4).Hidden = true;
-                //    worksheet.Column(10).Hidden = true;
-                //    worksheet.Cells["A" + (counter) + ":i" + (counter) + ""].Merge = true;
-                //}
-                //else
-                //{
-                    worksheet.Cells["A" + (counter) + ":G" + (counter) + ""].Merge = true;
-                //}
-                package.SaveAs(stream);
+				}
+			}
+			using (var package = new ExcelPackage())
+			{
+				var worksheet = package.Workbook.Worksheets.Add("Sheet 1");
+
+				worksheet.Column(5).Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+				worksheet.Cells["E" + 2 + ":E" + counter + ""].Style.Numberformat.Format = "#,##0.00";
+				worksheet.Cells["G" + 6 + ":O" + counter + ""].Style.Numberformat.Format = "#,##0.00";
+				worksheet.Cells["G" + 6 + ":O" + counter + ""].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+				worksheet.Cells["A" + 5 + ":O" + counter + ""].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+				worksheet.Cells["A" + 5 + ":O" + counter + ""].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+				worksheet.Cells["A" + 5 + ":O" + counter + ""].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+				worksheet.Cells["A" + 5 + ":O" + counter + ""].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+				worksheet.Cells["I" + (counter) + ":O" + (counter) + ""].Style.Font.Bold = true;
+				worksheet.Cells["A" + 1 + ":O" + 1 + ""].Style.Font.Bold = true;
+				worksheet.Cells["A1"].Value = "Report Cutting";
+				worksheet.Cells["A" + 1 + ":O" + 1 + ""].Merge = true;
+				worksheet.Cells["A2"].Value = "Periode " + dateFrom.ToString("dd-MM-yyyy") + " s/d " + dateTo.ToString("dd-MM-yyyy");
+				worksheet.Cells["A3"].Value = "Konfeksi " + _unitName;
+				worksheet.Cells["A" + 1 + ":O" + 1 + ""].Merge = true;
+				worksheet.Cells["A" + 2 + ":O" + 2 + ""].Merge = true;
+				worksheet.Cells["A" + 3 + ":O" + 3 + ""].Merge = true;
+				worksheet.Cells["A" + 1 + ":O" + 3 + ""].Style.Font.Size = 15;
+				worksheet.Cells["A" + 1 + ":O" + 5 + ""].Style.Font.Bold = true;
+				worksheet.Cells["A" + 1 + ":O" + 5 + ""].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+				worksheet.Cells["A" + 1 + ":O" + 5 + ""].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+				worksheet.Cells["A5"].LoadFromDataTable(reportDataTable, true);
+				var stream = new MemoryStream();
+				if (request.type != "bookkeeping")
+				{
+					worksheet.Column(4).Hidden = true;
+					worksheet.Column(10).Hidden = true;
+					worksheet.Cells["A" + (counter) + ":i" + (counter) + ""].Merge = true;
+				}
+				else
+				{
+					worksheet.Cells["A" + (counter) + ":J" + (counter) + ""].Merge = true;
+				}
+				package.SaveAs(stream);
 
                 return stream;
             }
