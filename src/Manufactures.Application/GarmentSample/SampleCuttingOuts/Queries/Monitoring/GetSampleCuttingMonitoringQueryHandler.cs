@@ -73,10 +73,12 @@ namespace Manufactures.Application.GarmentSample.SampleCuttingOuts.Queries.Monit
         }
         public async Task<GarmentSampleCuttingMonitoringViewModel> Handle(GetSampleCuttingMonitoringQuery request, CancellationToken cancellationToken)
         {
-            DateTimeOffset dateFrom = request.dateFrom.AddHours(7).ToUniversalTime();
-            DateTimeOffset dateTo = request.dateTo.AddHours(7).ToUniversalTime();
-            
-            var sumbasicPrice = (from a in GarmentSamplePreparingRepository.Query
+			DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom);
+			dateFrom.AddHours(7);
+			DateTimeOffset dateTo = new DateTimeOffset(request.dateTo);
+			dateTo = dateTo.AddHours(7);
+
+			var sumbasicPrice = (from a in GarmentSamplePreparingRepository.Query
                                  join b in GarmentSamplePreparingItemRepository.Query
                                  on a.Identity equals b.GarmentSamplePreparingId
                                  select new

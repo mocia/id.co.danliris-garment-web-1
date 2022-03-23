@@ -75,11 +75,13 @@ namespace Manufactures.Application.GarmentSample.SampleCuttingOuts.Queries.Monit
                              where a.UnitId == request.unit
                              select a.UnitName).FirstOrDefault();
 
-            DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom, new TimeSpan(7, 0, 0));
-            DateTimeOffset dateTo = new DateTimeOffset(request.dateTo, new TimeSpan(7, 0, 0));
+			DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom);
+			dateFrom.AddHours(7);
+			DateTimeOffset dateTo = new DateTimeOffset(request.dateTo);
+			dateTo = dateTo.AddHours(7);
 
-            
-            var sumbasicPrice = (from a in (from cut in GarmentSamplePreparingRepository.Query
+
+			var sumbasicPrice = (from a in (from cut in GarmentSamplePreparingRepository.Query
                                             where cut.UnitId == request.unit
                                             select new
                                             {
