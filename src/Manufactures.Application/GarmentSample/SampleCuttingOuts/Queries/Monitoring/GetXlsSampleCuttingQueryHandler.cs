@@ -384,8 +384,8 @@ namespace Manufactures.Application.GarmentSample.SampleCuttingOuts.Queries.Monit
 				var stream = new MemoryStream();
 				if (request.type != "bookkeeping")
 				{
-					worksheet.Column(4).Hidden = true;
 					worksheet.Column(10).Hidden = true;
+					worksheet.Column(15).Hidden = true;
 					worksheet.Cells["A" + (counter) + ":i" + (counter) + ""].Merge = true;
 				}
 				else

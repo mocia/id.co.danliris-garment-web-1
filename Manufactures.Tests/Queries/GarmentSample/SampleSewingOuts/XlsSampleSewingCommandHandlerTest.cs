@@ -170,5 +170,104 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleSewingOuts
             // Assert
             result.Should().NotBeNull();
         }
-    }
+		[Fact]
+		public async Task Handle_StateUnderTestBookeeping_ExpectedBehavior()
+		{
+			// Arrange
+			GetXlsSampleSewingQueryHandler unitUnderTest = CreateGetMonitoringSewingQueryHandler();
+			CancellationToken cancellationToken = CancellationToken.None;
+
+			Guid guidLoading = Guid.NewGuid();
+			Guid guidLoadingItem = Guid.NewGuid();
+			Guid guidSewingOut = Guid.NewGuid();
+			Guid guidSewingOutItem = Guid.NewGuid();
+			Guid guidCuttingIn = Guid.NewGuid();
+			Guid guidCuttingInItem = Guid.NewGuid();
+			Guid guidCuttingInDetail = Guid.NewGuid();
+			Guid guidPrepare = Guid.NewGuid();
+			Guid guidPrepareItem = Guid.NewGuid();
+			Guid guidFinishingOut = Guid.NewGuid();
+			Guid guidFinishingOutItem = Guid.NewGuid();
+
+			GetXlsSampleSewingQuery getMonitoring = new GetXlsSampleSewingQuery(1, 25, "{}", 1, DateTime.Now, DateTime.Now.AddDays(2), "BOOKEEPING", "token");
+
+			_mockGarmentCuttingInItemRepository
+			   .Setup(s => s.Query)
+			   .Returns(new List<GarmentSampleCuttingInItemReadModel>
+			   {
+					new GarmentSampleCuttingInItem(guidCuttingInItem,guidCuttingIn,guidPrepare,1,"uENNo",Guid.Empty,"sewingOutNo").GetReadModel()
+			   }.AsQueryable());
+
+			_mockGarmentCuttingInRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleCuttingInReadModel>
+				{
+					new GarmentSampleCuttingIn(guidCuttingIn,"cutInNo","Main Fabric","cuttingFrom","ro","article",new UnitDepartmentId(1),"unitCode","unitName",DateTimeOffset.Now,4.5).GetReadModel()
+				}.AsQueryable());
+
+			_mockGarmentCuttingInDetailRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleCuttingInDetailReadModel>
+				{
+					new GarmentSampleCuttingInDetail(guidCuttingInDetail,guidCuttingInItem,guidPrepareItem,Guid.Empty,Guid.Empty,new Domain.Shared.ValueObjects.ProductId(1),"productCode","productName","designColor","fabricType",9,new Domain.Shared.ValueObjects.UomId(1),"",4,new Domain.Shared.ValueObjects.UomId(1),"",1,100,100,5.5,null).GetReadModel()
+				}.AsQueryable());
+
+
+			_mockGarmentSewingOutItemRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleSewingOutItemReadModel>
+				{
+					new GarmentSampleSewingOutItem(guidSewingOutItem,guidSewingOut,new Guid(),new Guid(), new ProductId(1),"","","",new SizeId(1),"",0, new UomId(1),"","",10,100,100).GetReadModel()
+				}.AsQueryable());
+
+			_mockGarmentSewingOutRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleSewingOutReadModel>
+				{
+					new GarmentSampleSewingOut(guidSewingOut,"",new BuyerId(1),"","",new UnitDepartmentId(1),"","","CUTTING",DateTimeOffset.Now,"ro","",new UnitDepartmentId(1),"","",new GarmentComodityId(1),"","",true).GetReadModel()
+				}.AsQueryable());
+			_mockGarmentSewingInRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleSewingInReadModel>
+				{
+					new GarmentSampleSewingIn(guidSewingOut,"","",new Guid(),"",new UnitDepartmentId(1),"","",new UnitDepartmentId(1),"","","rono","article",new GarmentComodityId(1),"","",DateTimeOffset.Now).GetReadModel()
+				}.AsQueryable());
+			_mockGarmentSewingInItemRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleSewingInItemReadModel>
+				{
+					new GarmentSampleSewingInItem(new Guid(),guidSewingOut,new Guid(),new Guid(),Guid.Empty,Guid.Empty,new ProductId(1),"","","",new SizeId(1),"",1,new UomId(1),"","",1,1,1).GetReadModel()
+				}.AsQueryable());
+			_mockGarmentSampleRequestProductRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleRequestProductReadModel>
+				{
+					new GarmentSampleRequestProduct(guidSewingOutItem,guidSewingOutItem,"","",new SizeId(1),"","", 100,1).GetReadModel()
+				}.AsQueryable());
+			_mockGarmentSampleRequestRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleRequestReadModel>
+				{
+					new Manufactures.Domain.GarmentSample.SampleRequests.GarmentSampleRequest(guidSewingOutItem,"","","ro","",DateTimeOffset.Now,new BuyerId(1),"","",new GarmentComodityId(1),"","","","",DateTimeOffset.Now,"","","",true,true,DateTimeOffset.Now,"",false,null,"","",false,null,"","","","","","",new SectionId(1),"").GetReadModel()
+				}.AsQueryable());
+			//var garmentadjustmentId = Guid.NewGuid();
+			//  _mockGarmentAdjustmentRepository
+			//      .Setup(s => s.Query)
+			//      .Returns(new List<GarmentAdjustmentReadModel>
+			//      {
+			//           new GarmentAdjustment(garmentadjustmentId,"no","type","ro","article",new UnitDepartmentId(1),"unitcode","unitname",DateTimeOffset.Now,new GarmentComodityId(1),"comoditycode","comodityname","").GetReadModel()
+			//      }.AsQueryable());
+			//  _mockGarmentAdjustmentItemRepository
+			//     .Setup(s => s.Query)
+			//     .Returns(new List<GarmentAdjustmentItemReadModel>
+			//     {
+			//           new GarmentAdjustmentItem(new Guid(),new Guid(),new Guid(),new Guid(),new Guid(),new Guid(),new SizeId(1),"sizeName",new ProductId(1),"productCode","productName","",1,1,new UomId(1),"uom","color",10).GetReadModel()
+			//     }.AsQueryable());
+			// Act
+			var result = await unitUnderTest.Handle(getMonitoring, cancellationToken);
+
+			// Assert
+			result.Should().NotBeNull();
+		}
+	}
 }
