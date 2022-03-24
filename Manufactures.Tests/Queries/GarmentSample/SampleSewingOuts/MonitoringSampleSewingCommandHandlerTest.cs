@@ -5,6 +5,9 @@ using Manufactures.Application.GarmentSample.SampleSewingOuts.Queries.Monitoring
 using Manufactures.Domain.GarmentSample.SampleCuttingIns;
 using Manufactures.Domain.GarmentSample.SampleCuttingIns.ReadModels;
 using Manufactures.Domain.GarmentSample.SampleCuttingIns.Repositories;
+using Manufactures.Domain.GarmentSample.SamplePreparings;
+using Manufactures.Domain.GarmentSample.SamplePreparings.ReadModels;
+using Manufactures.Domain.GarmentSample.SamplePreparings.Repositories;
 using Manufactures.Domain.GarmentSample.SampleRequests;
 using Manufactures.Domain.GarmentSample.SampleRequests.ReadModels;
 using Manufactures.Domain.GarmentSample.SampleRequests.Repositories;
@@ -39,8 +42,10 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleSewingOuts
         private readonly Mock<IGarmentSampleCuttingInDetailRepository> _mockGarmentCuttingInDetailRepository;
         private readonly Mock<IGarmentSampleRequestProductRepository> _mockGarmentSampleRequestProductRepository;
         private readonly Mock<IGarmentSampleRequestRepository> _mockGarmentSampleRequestRepository;
+		private readonly Mock<IGarmentSamplePreparingRepository> _mockGarmentSamplePreparingRepository;
+		private readonly Mock<IGarmentSamplePreparingItemRepository> _mockGarmentSamplePreparingItemRepository;
 
-        protected readonly Mock<IHttpClientService> _mockhttpService;
+		protected readonly Mock<IHttpClientService> _mockhttpService;
         private Mock<IServiceProvider> serviceProviderMock;
         public MonitoringSampleSewingCommandHandlerTest()
         {
@@ -53,8 +58,10 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleSewingOuts
             _mockGarmentSewingInItemRepository = CreateMock<IGarmentSampleSewingInItemRepository>();
             _mockGarmentSampleRequestProductRepository= CreateMock<IGarmentSampleRequestProductRepository>();
             _mockGarmentSampleRequestRepository = CreateMock<IGarmentSampleRequestRepository>();
+			_mockGarmentSamplePreparingRepository = CreateMock<IGarmentSamplePreparingRepository>();
+			_mockGarmentSamplePreparingItemRepository = CreateMock<IGarmentSamplePreparingItemRepository>();
 
-            _MockStorage.SetupStorage(_mockGarmentSewingOutRepository);
+			_MockStorage.SetupStorage(_mockGarmentSewingOutRepository);
             _MockStorage.SetupStorage(_mockGarmentSewingOutItemRepository);
             _MockStorage.SetupStorage(_mockGarmentCuttingInRepository);
             _MockStorage.SetupStorage(_mockGarmentCuttingInItemRepository);
@@ -63,8 +70,9 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleSewingOuts
             _MockStorage.SetupStorage(_mockGarmentSewingInItemRepository);
             _MockStorage.SetupStorage(_mockGarmentSampleRequestProductRepository);
             _MockStorage.SetupStorage(_mockGarmentSampleRequestRepository);
-
-            serviceProviderMock = new Mock<IServiceProvider>();
+			_MockStorage.SetupStorage(_mockGarmentSamplePreparingRepository);
+			_MockStorage.SetupStorage(_mockGarmentSamplePreparingItemRepository);
+			serviceProviderMock = new Mock<IServiceProvider>();
             _mockhttpService = CreateMock<IHttpClientService>();
 
            
@@ -95,28 +103,28 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleSewingOuts
 
             GetMonitoringSampleSewingQuery getMonitoring = new GetMonitoringSampleSewingQuery(1, 25, "{}", 1, DateTime.Now, DateTime.Now.AddDays(2), "token");
 
-            _mockGarmentCuttingInItemRepository
-               .Setup(s => s.Query)
-               .Returns(new List<GarmentSampleCuttingInItemReadModel>
-               {
-                    new GarmentSampleCuttingInItem(guidCuttingInItem,guidCuttingIn,guidPrepare,1,"uENNo",Guid.Empty,"sewingOutNo").GetReadModel()
-               }.AsQueryable());
+			_mockGarmentCuttingInItemRepository
+			 .Setup(s => s.Query)
+			 .Returns(new List<GarmentSampleCuttingInItemReadModel>
+			 {
+					new GarmentSampleCuttingInItem(guidCuttingInItem,guidCuttingIn,guidPrepare,1,"uENNo",Guid.Empty,"sewingOutNo").GetReadModel()
+			 }.AsQueryable());
 
-            _mockGarmentCuttingInRepository
-                .Setup(s => s.Query)
-                .Returns(new List<GarmentSampleCuttingInReadModel>
-                {
-                    new GarmentSampleCuttingIn(guidCuttingIn,"cutInNo","Main Fabric","cuttingFrom","ro","article",new UnitDepartmentId(1),"unitCode","unitName",DateTimeOffset.Now,4.5).GetReadModel()
-                }.AsQueryable());
+			_mockGarmentCuttingInRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleCuttingInReadModel>
+				{
+					new GarmentSampleCuttingIn(guidCuttingIn,"cutInNo","Main Fabric","cuttingFrom","ro","article",new UnitDepartmentId(1),"unitCode","unitName",DateTimeOffset.Now,4.5).GetReadModel()
+				}.AsQueryable());
 
-            _mockGarmentCuttingInDetailRepository
-                .Setup(s => s.Query)
-                .Returns(new List<GarmentSampleCuttingInDetailReadModel>
-                {
-                    new GarmentSampleCuttingInDetail(guidCuttingInDetail,guidCuttingInItem,guidPrepareItem,Guid.Empty,Guid.Empty,new Domain.Shared.ValueObjects.ProductId(1),"productCode","productName","designColor","fabricType",9,new Domain.Shared.ValueObjects.UomId(1),"",4,new Domain.Shared.ValueObjects.UomId(1),"",1,100,100,5.5,null).GetReadModel()
-                }.AsQueryable());
+			_mockGarmentCuttingInDetailRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleCuttingInDetailReadModel>
+				{
+					new GarmentSampleCuttingInDetail(guidCuttingInDetail,guidCuttingInItem,guidPrepareItem,Guid.Empty,Guid.Empty,new Domain.Shared.ValueObjects.ProductId(1),"productCode","productName","designColor","fabricType",9,new Domain.Shared.ValueObjects.UomId(1),"",4,new Domain.Shared.ValueObjects.UomId(1),"",1,100,100,5.5,null).GetReadModel()
+				}.AsQueryable());
 
-          
+
 			_mockGarmentSewingOutItemRepository
 				.Setup(s => s.Query)
 				.Returns(new List<GarmentSampleSewingOutItemReadModel>
@@ -128,47 +136,50 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleSewingOuts
 				.Setup(s => s.Query)
 				.Returns(new List<GarmentSampleSewingOutReadModel>
 				{
-					new GarmentSampleSewingOut(guidSewingOut,"",new BuyerId(1),"","",new UnitDepartmentId(1),"","","",DateTimeOffset.Now,"ro","",new UnitDepartmentId(1),"","",new GarmentComodityId(1),"","",true).GetReadModel()
+					new GarmentSampleSewingOut(guidSewingOut,"",new Domain.Shared.ValueObjects.BuyerId(1),"","",new UnitDepartmentId(1),"","","CUTTING",DateTimeOffset.Now,"ro","",new UnitDepartmentId(1),"","",new GarmentComodityId(1),"","",true).GetReadModel()
 				}.AsQueryable());
-            _mockGarmentSewingInRepository
-                .Setup(s => s.Query)
-                .Returns(new List<GarmentSampleSewingInReadModel>
-                {
-                    new GarmentSampleSewingIn(guidSewingOut,"","",new Guid(),"",new UnitDepartmentId(1),"","",new UnitDepartmentId(1),"","","rono","article",new GarmentComodityId(1),"","",DateTimeOffset.Now).GetReadModel()
-                }.AsQueryable());
-            _mockGarmentSewingInItemRepository
-                .Setup(s => s.Query)
-                .Returns(new List<GarmentSampleSewingInItemReadModel>
-                {
-                    new GarmentSampleSewingInItem(new Guid(),guidSewingOut,new Guid(),new Guid(),Guid.Empty,Guid.Empty,new ProductId(1),"","","",new SizeId(1),"",1,new UomId(1),"","",1,1,1).GetReadModel()
-                }.AsQueryable());
-            _mockGarmentSampleRequestProductRepository
-                .Setup(s => s.Query)
-                .Returns(new List<GarmentSampleRequestProductReadModel>
-                {
-                    new GarmentSampleRequestProduct(guidSewingOutItem,guidSewingOutItem,"","",new SizeId(1),"","", 100,1).GetReadModel()
-                }.AsQueryable());
-            _mockGarmentSampleRequestRepository
-                .Setup(s => s.Query)
-                .Returns(new List<GarmentSampleRequestReadModel>
-                {
-                    new Manufactures.Domain.GarmentSample.SampleRequests.GarmentSampleRequest(guidSewingOutItem,"","","ro","",DateTimeOffset.Now,new BuyerId(1),"","",new GarmentComodityId(1),"","","","",DateTimeOffset.Now,"","","",true,true,DateTimeOffset.Now,"",false,null,"","",false,null,"","","","","","",new SectionId(1),"").GetReadModel()
-                }.AsQueryable());
-            //var garmentadjustmentId = Guid.NewGuid();
-            //  _mockGarmentAdjustmentRepository
-            //      .Setup(s => s.Query)
-            //      .Returns(new List<GarmentAdjustmentReadModel>
-            //      {
-            //           new GarmentAdjustment(garmentadjustmentId,"no","type","ro","article",new UnitDepartmentId(1),"unitcode","unitname",DateTimeOffset.Now,new GarmentComodityId(1),"comoditycode","comodityname","").GetReadModel()
-            //      }.AsQueryable());
-            //  _mockGarmentAdjustmentItemRepository
-            //     .Setup(s => s.Query)
-            //     .Returns(new List<GarmentAdjustmentItemReadModel>
-            //     {
-            //           new GarmentAdjustmentItem(new Guid(),new Guid(),new Guid(),new Guid(),new Guid(),new Guid(),new SizeId(1),"sizeName",new ProductId(1),"productCode","productName","",1,1,new UomId(1),"uom","color",10).GetReadModel()
-            //     }.AsQueryable());
-            // Act
-            var result = await unitUnderTest.Handle(getMonitoring, cancellationToken);
+			_mockGarmentSewingInRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleSewingInReadModel>
+				{
+					new GarmentSampleSewingIn(guidSewingOut,"","",new Guid(),"",new Domain.Shared.ValueObjects.UnitDepartmentId(1),"","",new UnitDepartmentId(1),"","","rono","article",new Domain.Shared.ValueObjects.GarmentComodityId(1),"","",DateTimeOffset.Now).GetReadModel()
+				}.AsQueryable());
+			_mockGarmentSewingInItemRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleSewingInItemReadModel>
+				{
+					new GarmentSampleSewingInItem(new Guid(),guidSewingOut,new Guid(),new Guid(),Guid.Empty,Guid.Empty,new Domain.Shared.ValueObjects.ProductId(1),"","","",new Domain.Shared.ValueObjects.SizeId(1),"",1,new Domain.Shared.ValueObjects.UomId(1),"","",1,1,1).GetReadModel()
+				}.AsQueryable());
+			_mockGarmentSampleRequestProductRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleRequestProductReadModel>
+				{
+					new GarmentSampleRequestProduct(guidSewingOutItem,guidSewingOutItem,"","",new Domain.Shared.ValueObjects.SizeId(1),"","", 100,1).GetReadModel()
+				}.AsQueryable());
+			_mockGarmentSampleRequestRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSampleRequestReadModel>
+				{
+					new Manufactures.Domain.GarmentSample.SampleRequests.GarmentSampleRequest(guidSewingOutItem,"","","ro","",DateTimeOffset.Now,new Domain.Shared.ValueObjects.BuyerId(1),"","",new Domain.Shared.ValueObjects.GarmentComodityId(1),"","","","",DateTimeOffset.Now,"","","",true,true,DateTimeOffset.Now,"",false,null,"","",false,null,"","","","","","",new Domain.Shared.ValueObjects.SectionId(1),"").GetReadModel()
+				}.AsQueryable());
+
+			var guidGarmentSamplePreparing = Guid.NewGuid();
+			_mockGarmentSamplePreparingRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSamplePreparingReadModel>
+				{
+					 new Domain.GarmentSample.SamplePreparings.GarmentSamplePreparing(guidGarmentSamplePreparing,1, "UENNo", new Domain.GarmentSample.SamplePreparings.ValueObjects.UnitDepartmentId(1), "UnitCode", "UnitName", DateTimeOffset.Now, "ro", "Article", true,new Domain.Shared.ValueObjects.BuyerId(1), null,null).GetReadModel()
+				}.AsQueryable());
+
+			var garmentPreparingItem = Guid.NewGuid();
+			_mockGarmentSamplePreparingItemRepository
+				.Setup(s => s.Query)
+				.Returns(new List<GarmentSamplePreparingItemReadModel>
+				{
+					 new GarmentSamplePreparingItem(guidGarmentSamplePreparing, 0, new Domain.GarmentSample.SamplePreparings.ValueObjects.ProductId(1), null, null, null, 0, new Domain.GarmentSample.SamplePreparings.ValueObjects.UomId(1), null, null, 0, 0, Guid.Empty,null).GetReadModel()
+				}.AsQueryable());
+			// Act
+			var result = await unitUnderTest.Handle(getMonitoring, cancellationToken);
 
 			// Assert
 			result.Should().NotBeNull();
