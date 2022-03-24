@@ -27,8 +27,8 @@ namespace Manufactures.Application.GarmentSample.SampleSewingOuts.Queries.Monito
         private readonly IGarmentSampleSewingOutRepository garmentSampleSewingOutRepository;
         private readonly IGarmentSampleSewingOutItemRepository garmentSampleSewingOutItemRepository;
 
-        //private readonly IGarmentSamplePreparingRepository garmentSamplePreparingRepository;
-        //private readonly IGarmentSamplePreparingItemRepository garmentSamplePreparingItemRepository;
+        private readonly IGarmentSamplePreparingRepository garmentSamplePreparingRepository;
+        private readonly IGarmentSamplePreparingItemRepository garmentSamplePreparingItemRepository;
         //private readonly IGarmentSampleBalanceMonitoringProductionStockFlowRepository GarmentSampleBalanceSewingRepository;
         private readonly IGarmentSampleCuttingInRepository garmentSampleCuttingInRepository;
         private readonly IGarmentSampleSewingInRepository garmentSampleSewingInRepository;
@@ -44,10 +44,10 @@ namespace Manufactures.Application.GarmentSample.SampleSewingOuts.Queries.Monito
             _storage = storage;
             garmentSampleSewingOutRepository = storage.GetRepository<IGarmentSampleSewingOutRepository>();
             garmentSampleSewingOutItemRepository = storage.GetRepository<IGarmentSampleSewingOutItemRepository>();
-            //garmentSamplePreparingRepository = storage.GetRepository<IGarmentSamplePreparingRepository>();
-            //garmentSamplePreparingItemRepository = storage.GetRepository<IGarmentSamplePreparingItemRepository>();
-            //GarmentSampleBalanceSewingRepository = storage.GetRepository<IGarmentSampleBalanceMonitoringProductionStockFlowRepository>();
-            garmentSampleCuttingInRepository = storage.GetRepository<IGarmentSampleCuttingInRepository>();
+			garmentSamplePreparingRepository = storage.GetRepository<IGarmentSamplePreparingRepository>();
+			garmentSamplePreparingItemRepository = storage.GetRepository<IGarmentSamplePreparingItemRepository>();
+			//GarmentSampleBalanceSewingRepository = storage.GetRepository<IGarmentSampleBalanceMonitoringProductionStockFlowRepository>();
+			garmentSampleCuttingInRepository = storage.GetRepository<IGarmentSampleCuttingInRepository>();
             garmentSampleSewingInRepository = storage.GetRepository<IGarmentSampleSewingInRepository>();
             garmentSampleSewingInItemRepository = storage.GetRepository<IGarmentSampleSewingInItemRepository>();
             //GarmentSampleAdjustmentRepository = storage.GetRepository<IGarmentSampleAdjustmentRepository>();
@@ -97,11 +97,21 @@ namespace Manufactures.Application.GarmentSample.SampleSewingOuts.Queries.Monito
             dateFrom.AddHours(7);
             DateTimeOffset dateTo = new DateTimeOffset(request.dateTo);
             dateTo = dateTo.AddHours(7);
-            //DateTimeOffset dateBalance = (from a in garmentBalanceSewingRepository.Query.OrderByDescending(s => s.CreatedDate)
-            //                              select a.CreatedDate).FirstOrDefault();
+			//DateTimeOffset dateBalance = (from a in garmentBalanceSewingRepository.Query.OrderByDescending(s => s.CreatedDate)
+			//                              select a.CreatedDate).FirstOrDefault();
+			var sumbasicPrice = (from a in (from prep in garmentSamplePreparingRepository.Query
+											select new { prep.RONo, prep.Identity })
+								 join b in garmentSamplePreparingItemRepository.Query on a.Identity equals b.GarmentSamplePreparingId
 
+								 select new { a.RONo, b.BasicPrice })
+				 .GroupBy(x => new { x.RONo }, (key, group) => new ViewBasicPrices
+				 {
+					 RO = key.RONo,
+					 BasicPrice = Math.Round(Convert.ToDecimal(group.Sum(s => s.BasicPrice)), 2),
+					 Count = group.Count()
+				 });
 
-            var sumFCs = (from a in garmentSampleCuttingInRepository.Query
+			var sumFCs = (from a in garmentSampleCuttingInRepository.Query
                           where /*(request.ro == null || (request.ro != null && request.ro != "" && a.RONo == request.ro)) && */ a.CuttingType == "Main Fabric" //&&
                                                                                                                                                                 /*a.UnitId == request.unit && a.CuttingInDate <= dateTo*/
                           join b in garmentSampleCuttingInItemRepository.Query on a.Identity equals b.CutInId
@@ -204,10 +214,14 @@ namespace Manufactures.Application.GarmentSample.SampleSewingOuts.Queries.Monito
             var data = from a in monitoringDtos
                        where a.beginingBalanceSewingQty > 0 || a.qtySewingIn > 0 || a.qtySewingInTransfer > 0 || a.qtySewingOut > 0 || a.qtySewingRetur > 0 || a.qtySewingAdj > 0 || a.wipSewingOut > 0 || a.wipFinishingOut > 0
                        select a;
-            var roList = (from a in data
-                          select a.roJob).Distinct().ToList();
+			foreach (var garment in data)
+			{
+				garment.price = Math.Round(Convert.ToDecimal((from aa in sumbasicPrice where aa.RO == garment.roJob select aa.BasicPrice / aa.Count).FirstOrDefault()), 2) * Convert.ToDecimal((from cost in sumFCs where cost.RO == garment.roJob select cost.FC / cost.Count).FirstOrDefault());
+				garment.endBalanceSewingPrice = Math.Round(garment.endBalanceSewingQty * (double)garment.price, 2);
+			}
 
-            monitoringDtos = data.ToList();
+
+			monitoringDtos = data.ToList();
             double beginingSewing = 0;
             double sewingIn = 0;
             double sewingIntrasnfer = 0;
@@ -252,6 +266,7 @@ namespace Manufactures.Application.GarmentSample.SampleSewingOuts.Queries.Monito
                 endBalanceSewingQty = endBalance,
                 endBalanceSewingPrice = endBalancePrice
             };
+
             monitoringDtos.Add(dtos);
             listViewModel.garmentMonitorings = monitoringDtos;
             var reportDataTable = new DataTable();

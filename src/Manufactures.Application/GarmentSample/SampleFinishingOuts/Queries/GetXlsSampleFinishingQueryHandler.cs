@@ -79,7 +79,8 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries
             public string RO { get; internal set; }
             public double FC { get; internal set; }
             public int Count { get; internal set; }
-        }
+			public double AvgFC { get; set; }
+		}
         public async Task<MemoryStream> Handle(GetXlsSampleFinishingQuery request, CancellationToken cancellationToken)
         {
             DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom);
@@ -91,19 +92,20 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries
             var _unitName = (from a in garmentFinishingOutRepository.Query
                              where a.UnitId == request.unit
                              select a.UnitName).FirstOrDefault();
-            var sumbasicPrice = (from a in (from prep in garmentPreparingRepository.Query
-                                            select new { prep.RONo, prep.Identity, prep.UnitId })
-                                 join b in garmentPreparingItemRepository.Query on a.Identity equals b.GarmentSamplePreparingId
+			var sumbasicPrice = (from a in (from prep in garmentPreparingRepository.Query
+											select new { prep.RONo, prep.Identity, prep.UnitId })
+								 join b in garmentPreparingItemRepository.Query on a.Identity equals b.GarmentSamplePreparingId
 
-                                 select new { a.RONo, b.BasicPrice })
-                        .GroupBy(x => new { x.RONo }, (key, group) => new ViewBasicPrices
-                        {
-                            RO = key.RONo,
-                            BasicPrice = Convert.ToDecimal(group.Sum(s => s.BasicPrice)),
-                            Count = group.Count()
-                        });
+								 select new { a.RONo, b.BasicPrice })
+					   .GroupBy(x => new { x.RONo }, (key, group) => new ViewBasicPrices
+					   {
+						   RO = key.RONo,
+						   BasicPrice = Convert.ToDecimal(group.Sum(s => s.BasicPrice)),
+						   Count = group.Count()
 
-            var sumFCs = (from a in garmentCuttingInRepository.Query
+					   });
+
+			var sumFCs = (from a in garmentCuttingInRepository.Query
                           where a.CuttingType == "Main Fabric" &&
                           a.CuttingInDate <= dateTo
                           join b in garmentCuttingInItemRepository.Query on a.Identity equals b.CutInId
@@ -113,8 +115,9 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries
                        {
                            RO = key.RONo,
                            FC = group.Sum(s => (s.FCs)),
-                           Count = group.Sum(s => s.CuttingInQuantity)
-                       });
+                           Count = group.Sum(s => s.CuttingInQuantity),
+						   AvgFC = group.Sum(s => (s.FCs)) / group.Sum(s => s.CuttingInQuantity)
+					   });
             GarmentSampleFinishingMonitoringListViewModel listViewModel = new GarmentSampleFinishingMonitoringListViewModel();
             List<GarmentSampleFinishingMonitoringDto> monitoringDtos = new List<GarmentSampleFinishingMonitoringDto>();
 
@@ -150,7 +153,7 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries
                     sewingOutQtyPcs = item.SewingQtyPcs,
                     finishingOutQtyPcs = item.Finishing,
                     stock = item.Stock,
-                    remainQty = item.Stock + item.SewingQtyPcs - item.Finishing
+					remainQty = item.Stock + item.SewingQtyPcs - item.Finishing
                 };
                 monitoringDtos.Add(dto);
             }
@@ -179,15 +182,15 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries
             {
                 garment.buyerCode = garment.buyerCode == null ? (from sr in sample where sr.RONoSample == garment.roJob select sr.BuyerCode).FirstOrDefault() : garment.buyerCode;
                 garment.style = garment.style == null ? (from sr in sample where sr.RONoSample == garment.roJob select sr.ComodityName).FirstOrDefault() : garment.style;
-                garment.price = Math.Round(Convert.ToDecimal((from aa in sumbasicPrice where aa.RO == garment.roJob select aa.BasicPrice / aa.Count).FirstOrDefault()), 2) * Convert.ToDecimal((from cost in sumFCs where cost.RO == garment.roJob select cost.FC / cost.Count).FirstOrDefault()) == 0 ? 0 : Math.Round(Convert.ToDecimal((from aa in sumbasicPrice where aa.RO == garment.roJob select aa.BasicPrice / aa.Count).FirstOrDefault()), 2) * Convert.ToDecimal((from cost in sumFCs where cost.RO == garment.roJob select cost.FC / cost.Count).FirstOrDefault());
-                garment.nominal = Math.Round((Convert.ToDecimal(garment.stock + garment.sewingOutQtyPcs - garment.finishingOutQtyPcs)) * garment.price, 2);
-                garment.qtyOrder = (from sr in sample where sr.RONoSample == garment.roJob select sr.Quantity).FirstOrDefault();
+				garment.price =  Math.Round(Convert.ToDouble((from aa in sumbasicPrice where aa.RO == garment.roJob select aa.BasicPrice / aa.Count).FirstOrDefault()), 2) * Convert.ToDouble((from cost in sumFCs where cost.RO == garment.roJob select cost.FC / cost.Count).FirstOrDefault());
+				garment.nominal = Math.Round((Convert.ToDouble(garment.stock + garment.sewingOutQtyPcs - garment.finishingOutQtyPcs)) * garment.price, 2);
+				garment.qtyOrder = (from sr in sample where sr.RONoSample == garment.roJob select sr.Quantity).FirstOrDefault();
                 stocks += garment.stock;
                 finishing += garment.finishingOutQtyPcs;
                 sewingOutQtyPcs += garment.sewingOutQtyPcs;
-                nominals += Math.Round((Convert.ToDecimal(garment.stock + garment.sewingOutQtyPcs - garment.finishingOutQtyPcs)) * garment.price, 2);
-            }
-            monitoringDtos = data.ToList();
+				nominals += Math.Round((Convert.ToDecimal(garment.stock + garment.sewingOutQtyPcs - garment.finishingOutQtyPcs)) * Convert.ToDecimal(garment.price), 2);
+			}
+			monitoringDtos = data.ToList();
             GarmentSampleFinishingMonitoringDto dtos = new GarmentSampleFinishingMonitoringDto
             {
                 roJob = "",
@@ -201,7 +204,7 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries
                 style = "",
                 price = 0,
                 remainQty = stocks + sewingOutQtyPcs - finishing,
-                nominal = nominals
+                nominal = Convert.ToDouble( nominals)
 
             };
             monitoringDtos.Add(dtos);
@@ -212,19 +215,19 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Kode Buyer", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Qty Order", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Style", DataType = typeof(string) });
-            //reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Harga()", DataType = typeof(decimal) });
+            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Harga(M)", DataType = typeof(decimal) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Stock Awal", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Barang Masuk", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Barang Keluar", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Sisa", DataType = typeof(double) });
-            //reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Nominal Sisa", DataType = typeof(decimal) });
+            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Nominal Sisa", DataType = typeof(decimal) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Satuan", DataType = typeof(string) });
             int counter = 5;
             if (listViewModel.garmentMonitorings.Count > 0)
             {
                 foreach (var report in listViewModel.garmentMonitorings)
                 {
-                    reportDataTable.Rows.Add(report.roJob, report.article, report.buyerCode, report.qtyOrder, report.style, report.stock, report.sewingOutQtyPcs, report.finishingOutQtyPcs, report.remainQty, report.uomUnit);
+                    reportDataTable.Rows.Add(report.roJob, report.article, report.buyerCode, report.qtyOrder, report.style,report.price, report.stock, report.sewingOutQtyPcs, report.finishingOutQtyPcs, report.remainQty,report.nominal, report.uomUnit);
                     counter++;
                 }
             }

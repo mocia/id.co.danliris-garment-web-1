@@ -333,12 +333,10 @@ namespace Manufactures.Application.GarmentSample.SampleCuttingOuts.Queries.Monit
             var reportDataTable = new DataTable();
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "RO JOB", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Article", DataType = typeof(string) });
-            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Kode Barang", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Kode Buyer", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Qty Order", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Style", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "FC", DataType = typeof(double) });
-            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Hours", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Hasil Potong (M)", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Harga (M)", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "Stock Awal", DataType = typeof(double) });
@@ -352,7 +350,7 @@ namespace Manufactures.Application.GarmentSample.SampleCuttingOuts.Queries.Monit
 			{
 				foreach (var report in listViewModel.garmentMonitorings)
 				{
-					reportDataTable.Rows.Add(report.roJob, report.article, report.productCode, report.buyerCode, report.qtyOrder, report.style, Math.Round(report.fc), report.hours, report.cuttingQtyMeter, Math.Round(report.price, 2), report.stock, report.cuttingQtyPcs, report.expenditure, report.remainQty, report.nominal);
+					reportDataTable.Rows.Add(report.roJob, report.article, report.buyerCode, report.qtyOrder, report.style, Math.Round(report.fc),report.cuttingQtyMeter, Math.Round(report.price, 2), report.stock, report.cuttingQtyPcs, report.expenditure, report.remainQty, report.nominal);
 					counter++;
 
 				}
@@ -363,36 +361,36 @@ namespace Manufactures.Application.GarmentSample.SampleCuttingOuts.Queries.Monit
 
 				worksheet.Column(5).Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 				worksheet.Cells["E" + 2 + ":E" + counter + ""].Style.Numberformat.Format = "#,##0.00";
-				worksheet.Cells["G" + 6 + ":O" + counter + ""].Style.Numberformat.Format = "#,##0.00";
-				worksheet.Cells["G" + 6 + ":O" + counter + ""].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
-				worksheet.Cells["A" + 5 + ":O" + counter + ""].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-				worksheet.Cells["A" + 5 + ":O" + counter + ""].Style.Border.Top.Style = ExcelBorderStyle.Thin;
-				worksheet.Cells["A" + 5 + ":O" + counter + ""].Style.Border.Left.Style = ExcelBorderStyle.Thin;
-				worksheet.Cells["A" + 5 + ":O" + counter + ""].Style.Border.Right.Style = ExcelBorderStyle.Thin;
-				worksheet.Cells["I" + (counter) + ":O" + (counter) + ""].Style.Font.Bold = true;
-				worksheet.Cells["A" + 1 + ":O" + 1 + ""].Style.Font.Bold = true;
+				worksheet.Cells["G" + 6 + ":M" + counter + ""].Style.Numberformat.Format = "#,##0.00";
+				worksheet.Cells["G" + 6 + ":M" + counter + ""].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+				worksheet.Cells["A" + 5 + ":M" + counter + ""].Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+				worksheet.Cells["A" + 5 + ":M" + counter + ""].Style.Border.Top.Style = ExcelBorderStyle.Thin;
+				worksheet.Cells["A" + 5 + ":M" + counter + ""].Style.Border.Left.Style = ExcelBorderStyle.Thin;
+				worksheet.Cells["A" + 5 + ":M" + counter + ""].Style.Border.Right.Style = ExcelBorderStyle.Thin;
+				worksheet.Cells["I" + (counter) + ":M" + (counter) + ""].Style.Font.Bold = true;
+				worksheet.Cells["A" + 1 + ":M" + 1 + ""].Style.Font.Bold = true;
 				worksheet.Cells["A1"].Value = "Report Cutting";
-				worksheet.Cells["A" + 1 + ":O" + 1 + ""].Merge = true;
+				worksheet.Cells["A" + 1 + ":M" + 1 + ""].Merge = true;
 				worksheet.Cells["A2"].Value = "Periode " + dateFrom.ToString("dd-MM-yyyy") + " s/d " + dateTo.ToString("dd-MM-yyyy");
 				worksheet.Cells["A3"].Value = "Konfeksi " + _unitName;
-				worksheet.Cells["A" + 1 + ":O" + 1 + ""].Merge = true;
-				worksheet.Cells["A" + 2 + ":O" + 2 + ""].Merge = true;
-				worksheet.Cells["A" + 3 + ":O" + 3 + ""].Merge = true;
-				worksheet.Cells["A" + 1 + ":O" + 3 + ""].Style.Font.Size = 15;
-				worksheet.Cells["A" + 1 + ":O" + 5 + ""].Style.Font.Bold = true;
-				worksheet.Cells["A" + 1 + ":O" + 5 + ""].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-				worksheet.Cells["A" + 1 + ":O" + 5 + ""].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+				worksheet.Cells["A" + 1 + ":M" + 1 + ""].Merge = true;
+				worksheet.Cells["A" + 2 + ":M" + 2 + ""].Merge = true;
+				worksheet.Cells["A" + 3 + ":M" + 3 + ""].Merge = true;
+				worksheet.Cells["A" + 1 + ":M" + 3 + ""].Style.Font.Size = 15;
+				worksheet.Cells["A" + 1 + ":M" + 5 + ""].Style.Font.Bold = true;
+				worksheet.Cells["A" + 1 + ":M" + 5 + ""].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+				worksheet.Cells["A" + 1 + ":M" + 5 + ""].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 				worksheet.Cells["A5"].LoadFromDataTable(reportDataTable, true);
 				var stream = new MemoryStream();
 				if (request.type != "bookkeeping")
 				{
-					worksheet.Column(10).Hidden = true;
-					worksheet.Column(15).Hidden = true;
-					worksheet.Cells["A" + (counter) + ":i" + (counter) + ""].Merge = true;
+					worksheet.Column(8).Hidden = true;
+					worksheet.Column(13).Hidden = true;
+					worksheet.Cells["A" + (counter) + ":g" + (counter) + ""].Merge = true;
 				}
 				else
 				{
-					worksheet.Cells["A" + (counter) + ":J" + (counter) + ""].Merge = true;
+					worksheet.Cells["A" + (counter) + ":h" + (counter) + ""].Merge = true;
 				}
 				package.SaveAs(stream);
 

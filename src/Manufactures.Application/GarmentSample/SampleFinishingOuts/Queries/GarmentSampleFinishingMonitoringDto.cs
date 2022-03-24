@@ -20,8 +20,8 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries
         public string uomUnit { get; internal set; }
         public string style { get; internal set; }
         public double remainQty { get; internal set; }
-        public decimal price { get; internal set; }
-        public decimal nominal { get; internal set; }
+        public double price { get; internal set; }
+        public double nominal { get; internal set; }
         public GarmentSampleFinishingMonitoringDto(GarmentSampleFinishingMonitoringDto garmentMonitoring)
         {
 
