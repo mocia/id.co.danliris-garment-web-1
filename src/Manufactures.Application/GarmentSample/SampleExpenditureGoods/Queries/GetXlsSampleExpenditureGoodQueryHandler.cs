@@ -112,11 +112,12 @@ namespace Manufactures.Application.GarmentSample.SampleExpenditureGoods.Queries
         }
         public async Task<MemoryStream> Handle(GetXlsSampleExpenditureGoodQuery request, CancellationToken cancellationToken)
         {
-            DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom, new TimeSpan(7, 0, 0));
-            DateTimeOffset dateTo = new DateTimeOffset(request.dateTo, new TimeSpan(7, 0, 0));
+			DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom);
+			dateFrom.AddHours(7);
+			DateTimeOffset dateTo = new DateTimeOffset(request.dateTo);
+			dateTo = dateTo.AddHours(7);
 
-
-            var QueryRo = (from a in garmentExpenditureGoodRepository.Query
+			var QueryRo = (from a in garmentExpenditureGoodRepository.Query
                            where a.UnitId == (request.unit == 0 ? a.UnitId : request.unit) && a.ExpenditureDate >= dateFrom && a.ExpenditureDate <= dateTo
                            select a.RONo).Distinct().ToList();
 
@@ -263,9 +264,9 @@ namespace Manufactures.Application.GarmentSample.SampleExpenditureGoods.Queries
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "COLOUR", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "NAMA", DataType = typeof(string) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "UNIT", DataType = typeof(string) });
-            //reportDataTable.Columns.Add(new DataColumn() { ColumnName = "HARGA (PCS)", DataType = typeof(decimal) });
+            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "HARGA (PCS)", DataType = typeof(decimal) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "QTY", DataType = typeof(double) });
-            //reportDataTable.Columns.Add(new DataColumn() { ColumnName = "NOMINAL", DataType = typeof(double) });
+            reportDataTable.Columns.Add(new DataColumn() { ColumnName = "NOMINAL", DataType = typeof(double) });
             reportDataTable.Columns.Add(new DataColumn() { ColumnName = "INVOICE", DataType = typeof(string) });
             int counter = 5;
             if (listViewModel.garmentMonitorings.Count > 0)
@@ -276,7 +277,7 @@ namespace Manufactures.Application.GarmentSample.SampleExpenditureGoods.Queries
                     string pebDate = report.pebDate.GetValueOrDefault() == new DateTime(1970, 1, 1) || report.pebDate.GetValueOrDefault().ToString("dd MMM yyyy") == "01 Jan 0001" ? "-" : report.pebDate.GetValueOrDefault().ToString("dd MMM yyy");
                     //Console.WriteLine(pebDate);
                     reportDataTable.Rows.Add(report.expenditureGoodNo, report.expenditureGoodType, report.expenditureDate.GetValueOrDefault().ToOffset(new TimeSpan(7, 0, 0)).ToString("dd MMM yyy"), pebDate,
-                    report.roNo, report.buyerArticle, report.colour, report.name, report.unitname, report.qty, report.invoice);
+                    report.roNo, report.buyerArticle, report.colour, report.name, report.unitname,report.price, report.qty,report.nominal, report.invoice);
                     counter++;
                     //Console.WriteLine(counter);
                 }

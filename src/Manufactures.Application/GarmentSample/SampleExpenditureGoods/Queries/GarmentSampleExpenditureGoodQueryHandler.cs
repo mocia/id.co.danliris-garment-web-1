@@ -114,11 +114,13 @@ namespace Manufactures.Application.GarmentSample.SampleExpenditureGoods.Queries
         }
         public async Task<GarmentMonitoringSampleExpenditureGoodListViewModel> Handle(GetMonitoringSampleExpenditureGoodQuery request, CancellationToken cancellationToken)
         {
-            DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom, new TimeSpan(7, 0, 0));
-            DateTimeOffset dateTo = new DateTimeOffset(request.dateTo, new TimeSpan(7, 0, 0));
+			DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom);
+			dateFrom.AddHours(7);
+			DateTimeOffset dateTo = new DateTimeOffset(request.dateTo);
+			dateTo = dateTo.AddHours(7);
 
 
-            var QueryRo = (from a in garmentExpenditureGoodRepository.Query
+			var QueryRo = (from a in garmentExpenditureGoodRepository.Query
                            where a.UnitId == (request.unit == 0 ? a.UnitId : request.unit) && a.ExpenditureDate >= dateFrom && a.ExpenditureDate <= dateTo
                            select a.RONo).Distinct();
 
