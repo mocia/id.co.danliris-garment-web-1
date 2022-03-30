@@ -2313,8 +2313,7 @@ namespace Manufactures.Application.GarmentSample.GarmentMonitoringSampleStockFlo
 									"Saldo Awal WIP Sewing","", "Sewing In (WIP Sewing)","", "Sewing Out (WIP Finishing)","", "Retur ke Cutting","", "Saldo Akhir WIP Sewing","",
 									"Saldo Awal WIP Finishing","", "Finishing In (WIP Finishing)","", "Finishing Out (WIP BJ)", "", "Retur ke Sewing", "",  "Saldo Akhir WIP Finishing","",
 									"Saldo Awal Barang jadi","", "Barang Jadi In/ (WIP BJ)","", "Pengiriman Export", "", "Pengiriman Gudang Sisa", "", "Pengiriman Arsip Sample", "", "Pengiriman Arsip Md", "","Saldo Akhir Barang Jadi",""
-								 
-									);
+								 );
 				reportDataTable.Rows.Add("", "", "", "", "", "", 
 									"Qty", "Harga", "Qty", "Harga", "Qty", "Harga", "Qty", "Harga", "Qty", "Harga", "Qty", "Harga",
 									"Qty", "Harga", "Qty", "Harga", "Qty", "Harga", "Qty", "Harga", "Qty", "Harga",
