@@ -1,5 +1,6 @@
 ﻿using Barebone.Controllers;
 using Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries;
+using Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries.GarmentSampleFinishingByColorMonitoring;
 using Manufactures.Domain.GarmentSample.SampleFinishingIns.Repositories;
 using Manufactures.Domain.GarmentSample.SampleFinishingOuts.Commands;
 using Manufactures.Domain.GarmentSample.SampleFinishingOuts.Repositories;
@@ -210,43 +211,84 @@ namespace Manufactures.Controllers.Api.GarmentSample
             }
         }
 
-        //[HttpGet("color")]
-        //public async Task<IActionResult> GetColor(int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")]List<string> select = null, string keyword = null, string filter = "{}")
-        //{
-        //    VerifyUser();
+		//[HttpGet("color")]
+		//public async Task<IActionResult> GetColor(int page = 1, int size = 25, string order = "{}", [Bind(Prefix = "Select[]")]List<string> select = null, string keyword = null, string filter = "{}")
+		//{
+		//    VerifyUser();
 
-        //    var query = _GarmentSampleFinishingOutRepository.ReadColor(page, size, order, keyword, filter);
-        //    var total = query.Count();
-        //    query = query.Skip((page - 1) * size).Take(size);
+		//    var query = _GarmentSampleFinishingOutRepository.ReadColor(page, size, order, keyword, filter);
+		//    var total = query.Count();
+		//    query = query.Skip((page - 1) * size).Take(size);
 
-        //    List<GarmentSampleFinishingOutListDto> GarmentSampleFinishingOutListDtos = _GarmentSampleFinishingOutRepository
-        //        .Find(query)
-        //        .Select(SewOut => new GarmentSampleFinishingOutListDto(SewOut))
-        //        .ToList();
+		//    List<GarmentSampleFinishingOutListDto> GarmentSampleFinishingOutListDtos = _GarmentSampleFinishingOutRepository
+		//        .Find(query)
+		//        .Select(SewOut => new GarmentSampleFinishingOutListDto(SewOut))
+		//        .ToList();
 
-        //    var dtoIds = GarmentSampleFinishingOutListDtos.Select(s => s.Id).ToList();
-        //    var items = _GarmentSampleFinishingOutItemRepository.Query
-        //        .Where(o => dtoIds.Contains(o.FinishingOutId))
-        //        .Select(s => new { s.Identity, s.FinishingOutId, s.ProductCode, s.Color, s.Quantity, s.RemainingQuantity })
-        //        .ToList();
+		//    var dtoIds = GarmentSampleFinishingOutListDtos.Select(s => s.Id).ToList();
+		//    var items = _GarmentSampleFinishingOutItemRepository.Query
+		//        .Where(o => dtoIds.Contains(o.FinishingOutId))
+		//        .Select(s => new { s.Identity, s.FinishingOutId, s.ProductCode, s.Color, s.Quantity, s.RemainingQuantity })
+		//        .ToList();
 
-        //    var itemIds = items.Select(s => s.Identity).ToList();
+		//    var itemIds = items.Select(s => s.Identity).ToList();
 
-        //    List<object> color = new List<object>();
-        //    foreach (var item in items)
-        //    {
-        //        color.Add(new { item.Color });
-        //    }
-        //    await Task.Yield();
-        //    return Ok(color.Distinct(), info: new
-        //    {
-        //        page,
-        //        size,
-        //        color.Count
-        //    });
-        //}
+		//    List<object> color = new List<object>();
+		//    foreach (var item in items)
+		//    {
+		//        color.Add(new { item.Color });
+		//    }
+		//    await Task.Yield();
+		//    return Ok(color.Distinct(), info: new
+		//    {
+		//        page,
+		//        size,
+		//        color.Count
+		//    });
+		//}
+		[HttpGet("monitoringByColor")]
+		public async Task<IActionResult> GetMonitoringByColor(int unit, DateTime dateFrom, DateTime dateTo, int page = 1, int size = 25, string Order = "{}")
+		{
+			VerifyUser();
+			GetSampleFinishingByColorMonitoringQuery query = new GetSampleFinishingByColorMonitoringQuery(page, size, Order, unit, dateFrom, dateTo, WorkContext.Token);
+			var viewModel = await Mediator.Send(query);
 
-        [HttpGet("{id}/{buyer}")]
+			return Ok(viewModel.garmentMonitorings, info: new
+			{
+				page,
+				size,
+				viewModel.count
+			});
+		}
+
+		[HttpGet("downloadByColor")]
+		public async Task<IActionResult> GetXlsByColor(int unit, DateTime dateFrom, DateTime dateTo, string type, int page = 1, int size = 25, string Order = "{}")
+		{
+			try
+			{
+				VerifyUser();
+				GetXlsSampleFinishingByColorQuery query = new GetXlsSampleFinishingByColorQuery(page, size, Order, unit, dateFrom, dateTo, type, WorkContext.Token);
+				byte[] xlsInBytes;
+
+				var xls = await Mediator.Send(query);
+
+				string filename = "Laporan Finishing Sample By Color";
+
+				if (dateFrom != null) filename += " " + ((DateTime)dateFrom).ToString("dd-MM-yyyy");
+
+				if (dateTo != null) filename += "_" + ((DateTime)dateTo).ToString("dd-MM-yyyy");
+				filename += ".xlsx";
+
+				xlsInBytes = xls.ToArray();
+				var file = File(xlsInBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
+				return file;
+			}
+			catch (Exception e)
+			{
+				return StatusCode((int)HttpStatusCode.InternalServerError, e.Message);
+			}
+		}
+		[HttpGet("{id}/{buyer}")]
         public async Task<IActionResult> GetPdf(string id, string buyer)
         {
             Guid guid = Guid.Parse(id);
