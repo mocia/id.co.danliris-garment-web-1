@@ -28,8 +28,7 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries.Gar
         private readonly IGarmentSamplePreparingItemRepository garmentPreparingItemRepository;
         private readonly IGarmentSampleCuttingInRepository garmentCuttingInRepository;
         private readonly IGarmentSampleCuttingInItemRepository garmentCuttingInItemRepository;
-        private readonly IGarmentSampleCuttingInDetailRepository garmentCuttingInDetailRepository;
-        private readonly IGarmentSampleFinishingMonitoringReportRepository garmentMonitoringFinishingReportRepository;
+        private readonly IGarmentSampleCuttingInDetailRepository garmentCuttingInDetailRepository; 
         private readonly IGarmentSampleRequestRepository GarmentSampleRequestRepository;
         private readonly IGarmentSampleRequestProductRepository GarmentSampleRequestProductRepository;
 
@@ -45,7 +44,7 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries.Gar
             garmentCuttingInRepository = storage.GetRepository<IGarmentSampleCuttingInRepository>();
             garmentCuttingInItemRepository = storage.GetRepository<IGarmentSampleCuttingInItemRepository>();
             garmentCuttingInDetailRepository = storage.GetRepository<IGarmentSampleCuttingInDetailRepository>();
-            garmentMonitoringFinishingReportRepository = storage.GetRepository<IGarmentSampleFinishingMonitoringReportRepository>();
+             
             _http = serviceProvider.GetService<IHttpClientService>();
             GarmentSampleRequestRepository = storage.GetRepository<IGarmentSampleRequestRepository>();
             GarmentSampleRequestProductRepository = storage.GetRepository<IGarmentSampleRequestProductRepository>();
