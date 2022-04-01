@@ -45,8 +45,10 @@ namespace Manufactures.Tests.Queries.GarmentFinishingOuts
         private readonly Mock<IGarmentCuttingInRepository> _mockGarmentCuttingInRepository;
         private readonly Mock<IGarmentCuttingInItemRepository> _mockGarmentCuttingInItemRepository;
         private readonly Mock<IGarmentCuttingInDetailRepository> _mockGarmentCuttingInDetailRepository;
+		private readonly Mock<IGarmentMonitoringFinishingReportRepository> _mockGarmentMonitoringFinishingReportRepository;
+		
 
-        protected readonly Mock<IHttpClientService> _mockhttpService;
+		protected readonly Mock<IHttpClientService> _mockhttpService;
 		private Mock<IServiceProvider> serviceProviderMock;
 		public MonitoringFinishingCommandHandlerTest()
 		{
@@ -60,8 +62,9 @@ namespace Manufactures.Tests.Queries.GarmentFinishingOuts
             _mockGarmentPreparingRepository = CreateMock<IGarmentPreparingRepository>();
             _mockGarmentPreparingItemRepository = CreateMock<IGarmentPreparingItemRepository>();
             _mockGarmentBalanceFinishingRepository = CreateMock<IGarmentBalanceMonitoringProductionStockFlowRepository>();
+			_mockGarmentMonitoringFinishingReportRepository = CreateMock<IGarmentMonitoringFinishingReportRepository>();
 
-            _MockStorage.SetupStorage(_mockGarmentFinishingOutRepository);
+			_MockStorage.SetupStorage(_mockGarmentFinishingOutRepository);
 			_MockStorage.SetupStorage(_mockGarmentFinishingOutItemRepository);
 			_MockStorage.SetupStorage(_mockGarmentSewingOutRepository);
 			_MockStorage.SetupStorage(_mockGarmentSewingOutItemRepository);
@@ -71,7 +74,8 @@ namespace Manufactures.Tests.Queries.GarmentFinishingOuts
             _MockStorage.SetupStorage(_mockGarmentCuttingInRepository);
             _MockStorage.SetupStorage(_mockGarmentCuttingInItemRepository);
             _MockStorage.SetupStorage(_mockGarmentCuttingInDetailRepository);
-            serviceProviderMock = new Mock<IServiceProvider>();
+			_MockStorage.SetupStorage(_mockGarmentMonitoringFinishingReportRepository);
+			serviceProviderMock = new Mock<IServiceProvider>();
 			_mockhttpService = CreateMock<IHttpClientService>();
 
             List<CostCalViewModel> costCalViewModels = new List<CostCalViewModel> {
@@ -93,7 +97,8 @@ namespace Manufactures.Tests.Queries.GarmentFinishingOuts
 			return new GetMonitoringFinishingQueryHandler(_MockStorage.Object, serviceProviderMock.Object);
 		}
 
-		/*[Fact]
+		/*
+		[Fact]
 		public async Task Handle_StateUnderTest_ExpectedBehavior()
 		{
 			// Arrange
@@ -179,9 +184,15 @@ namespace Manufactures.Tests.Queries.GarmentFinishingOuts
                 {
                      new GarmentBalanceMonitoringProductionStocFlow("ro","buyer","article","comodityName",1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,garmentBalanceFinishing).GetReadModel()
                 }.AsQueryable());
-
-            // Act
-            var result = await unitUnderTest.Handle(getMonitoring, cancellationToken);
+		 
+			_mockGarmentMonitoringFinishingReportRepository
+				.Setup(s => s.Query)
+			   .Returns(new List<GarmentMonitoringFinishingReportReadModel>
+			   {
+					 new GarmentMonitoringFinishingReport(new Guid(),"ro","article",1,1,1,"uomunit").GetReadModel()
+			   }.AsQueryable());
+			// Act
+			var result = await unitUnderTest.Handle(getMonitoring, cancellationToken);
 
 			// Assert
 			result.Should().NotBeNull();

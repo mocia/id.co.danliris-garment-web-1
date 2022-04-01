@@ -25,9 +25,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Manufactures.Tests.Queries.GarmentSample.SampleFinishingOut.MonitoringFinishingOutByColor
+namespace Manufactures.Tests.Queries.GarmentSample.SampleFinishingOuts.MonitoringFinishingOutByColor
 {
-	public class XlsMonitoringFinishingOutByColorCommandHandlerTest : BaseCommandUnitTest
+	public class MonitoringFinishingOutByColorCommandHandlerTest : BaseCommandUnitTest
 	{
 		private readonly Mock<IGarmentSampleSewingOutRepository> _mockGarmentSewingOutRepository;
 		private readonly Mock<IGarmentSampleSewingOutItemRepository> _mockGarmentSewingOutItemRepository;
@@ -43,7 +43,7 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleFinishingOut.Monitoring
 		protected readonly Mock<IHttpClientService> _mockhttpService;
 		private Mock<IServiceProvider> serviceProviderMock;
 
-		public XlsMonitoringFinishingOutByColorCommandHandlerTest()
+		public MonitoringFinishingOutByColorCommandHandlerTest()
 		{
 			_mockGarmentFinishingOutRepository = CreateMock<IGarmentSampleFinishingOutRepository>();
 			_mockGarmentFinishingOutItemRepository = CreateMock<IGarmentSampleFinishingOutItemRepository>();
@@ -63,7 +63,7 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleFinishingOut.Monitoring
 			_MockStorage.SetupStorage(_mockGarmentSewingOutRepository);
 			_MockStorage.SetupStorage(_mockGarmentSewingOutItemRepository);
 			_MockStorage.SetupStorage(_mockGarmentPreparingRepository);
-			_MockStorage.SetupStorage(_mockGarmentPreparingItemRepository);
+			_MockStorage.SetupStorage(_mockGarmentPreparingItemRepository); 
 			_MockStorage.SetupStorage(_mockGarmentCuttingInRepository);
 			_MockStorage.SetupStorage(_mockGarmentCuttingInItemRepository);
 			_MockStorage.SetupStorage(_mockGarmentCuttingInDetailRepository);
@@ -75,16 +75,15 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleFinishingOut.Monitoring
 
 			serviceProviderMock.Setup(x => x.GetService(typeof(IHttpClientService))).Returns(_mockhttpService.Object);
 		}
-		private GetXlsSampleFinishingByColorQueryHandler CreateGetXlsMonitoringSampleFinishingByColorQueryHandler()
+		private GetMonitoringSampleFinishingByColorQueryHandler CreateGetMonitoringSampleFinishingByColorQueryHandler()
 		{
-			return new GetXlsSampleFinishingByColorQueryHandler(_MockStorage.Object, serviceProviderMock.Object);
+			return new GetMonitoringSampleFinishingByColorQueryHandler(_MockStorage.Object, serviceProviderMock.Object);
 		}
-
 		[Fact]
 		public async Task Handle_StateUnderTest_ExpectedBehavior()
 		{
 			// Arrange
-			GetXlsSampleFinishingByColorQueryHandler unitUnderTest = CreateGetXlsMonitoringSampleFinishingByColorQueryHandler();
+			GetMonitoringSampleFinishingByColorQueryHandler unitUnderTest = CreateGetMonitoringSampleFinishingByColorQueryHandler();
 			CancellationToken cancellationToken = CancellationToken.None;
 			Guid guidPrepare = Guid.NewGuid();
 			Guid guidPrepareItem = Guid.NewGuid();
@@ -96,7 +95,7 @@ namespace Manufactures.Tests.Queries.GarmentSample.SampleFinishingOut.Monitoring
 			Guid guidCuttingInItem = Guid.NewGuid();
 			Guid guidCuttingInDetail = Guid.NewGuid();
 
-			GetXlsSampleFinishingByColorQuery getMonitoring = new GetXlsSampleFinishingByColorQuery(1, 25, "{}", 1, DateTime.Now, DateTime.Now.AddDays(2),"", "token");
+			GetSampleFinishingByColorMonitoringQuery getMonitoring = new GetSampleFinishingByColorMonitoringQuery(1, 25, "{}", 1, DateTime.Now, DateTime.Now.AddDays(2), "token");
 
 			_mockGarmentCuttingInItemRepository
 			   .Setup(s => s.Query)

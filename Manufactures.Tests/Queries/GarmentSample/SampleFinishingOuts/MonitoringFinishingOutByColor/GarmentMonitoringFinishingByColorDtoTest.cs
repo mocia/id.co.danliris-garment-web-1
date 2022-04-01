@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace Manufactures.Tests.Queries.GarmentSample.SampleFinishingOut.MonitoringFinishingOutByColor
+namespace Manufactures.Tests.Queries.GarmentSample.SampleFinishingOuts.MonitoringFinishingOutByColor
 {
 	public class GarmentMonitoringFinishingByColorDtoTest
 	{
