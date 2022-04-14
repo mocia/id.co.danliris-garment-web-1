@@ -319,10 +319,7 @@ namespace Manufactures.Application.GarmentSample.SampleFinishingOuts.Queries.Gar
 					worksheet.Cells[$"D{(rowNum1 + 4)}:D{(rowNum2 + 4)}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
 					worksheet.Cells[$"D{(rowNum1 + 4)}:D{(rowNum2 + 4)}"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
 
-					worksheet.Cells[$"E{(rowNum1 + 4)}:E{(rowNum2 + 4)}"].Merge = true;
-					worksheet.Cells[$"E{(rowNum1 + 4)}:E{(rowNum2 + 4)}"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Left;
-					worksheet.Cells[$"E{(rowNum1 + 4)}:E{(rowNum2 + 4)}"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-
+					
 
 					}
 
