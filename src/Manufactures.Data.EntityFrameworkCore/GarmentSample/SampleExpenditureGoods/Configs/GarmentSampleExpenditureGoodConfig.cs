@@ -24,7 +24,7 @@ namespace Manufactures.Data.EntityFrameworkCore.GarmentSample.SampleExpenditureG
             builder.Property(a => a.Invoice).HasMaxLength(50);
             builder.Property(a => a.BuyerName).HasMaxLength(100);
             builder.Property(a => a.BuyerCode).HasMaxLength(25);
-            builder.Property(a => a.ExpenditureType).HasMaxLength(25);
+            builder.Property(a => a.ExpenditureType).HasMaxLength(75);
 
             builder.HasIndex(i => i.ExpenditureGoodNo).IsUnique().HasFilter("[Deleted]=(0)");
 
