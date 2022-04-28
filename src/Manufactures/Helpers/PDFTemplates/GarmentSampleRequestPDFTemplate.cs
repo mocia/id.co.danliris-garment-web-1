@@ -37,10 +37,10 @@ namespace Manufactures.Helpers.PDFTemplates
 
             if (garmentSampleRequest.IsReceived)
             {
-                titleCaption = "SURAT PERMINTAAN PEMBUATAN SAMPLE MARKETING";
+                titleCaption = "SURAT PERMINTAAN PEMBUATAN SAMPLE";
             } else
             {
-                titleCaption = "DRAFT SURAT PERMINTAAN PEMBUATAN SAMPLE MARKETING";
+                titleCaption = "DRAFT SURAT PERMINTAAN PEMBUATAN SAMPLE";
             }
 
             Paragraph title = new Paragraph(titleCaption, header_font);

@@ -126,6 +126,7 @@ namespace Manufactures.Application.GarmentSample.GarmentMonitoringSampleStockFlo
 		{
 			 
 			this.Ro = flowDto.Ro;
+			this.BasicPrice = flowDto.BasicPrice;
 			this.BuyerCode = flowDto.BuyerCode;
 			this.Article = flowDto.Article;
 			this.Comodity = flowDto.Comodity;

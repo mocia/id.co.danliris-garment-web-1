@@ -203,16 +203,16 @@ namespace Manufactures.Application.GarmentSample.GarmentMonitoringSampleStockFlo
 			public string RO { get; internal set; }
 			public decimal BasicPrice { get; internal set; }
 			public int Count { get; internal set; }
+			public double AvgBasicPrice { get; internal set; }
 		}
 		class ViewFC
 		{
 			public string RO { get; internal set; }
 			public double FC { get; internal set; }
 			public double Count { get; internal set; }
+			public double AvgFC { get; internal set; }
 		}
-
-
-
+ 
 		public async Task<GarmentMonitoringSampleStockFlowListViewModel> Handle(GetMonitoringSampleStockFlowQuery request, CancellationToken cancellationToken)
 		{
 			DateTimeOffset dateFrom = new DateTimeOffset(request.dateFrom);
@@ -231,8 +231,9 @@ namespace Manufactures.Application.GarmentSample.GarmentMonitoringSampleStockFlo
                          {
                              RO = key.RONo,
                              BasicPrice = Convert.ToDecimal(group.Sum(s => s.BasicPrice)),
-                             Count = group.Count()
-                         });
+                             Count = group.Count(),
+							 AvgBasicPrice = (double)(Convert.ToDecimal(group.Sum(s => s.BasicPrice)) / group.Count())
+						 });
             var sumFCs = (from a in garmentCuttingInRepository.Query
                           where (request.ro == null || (request.ro != null && request.ro != "" && a.RONo == request.ro)) && a.CuttingType == "Main Fabric" &&
                           a.CuttingInDate <= dateTo
@@ -243,8 +244,9 @@ namespace Manufactures.Application.GarmentSample.GarmentMonitoringSampleStockFlo
                          {
                              RO = key.RONo,
                              FC = group.Sum(s => (s.FCs)),
-                             Count = group.Sum(s =>  s.CuttingInQuantity)
-                         });
+                             Count = group.Sum(s =>  s.CuttingInQuantity),
+							 AvgFC = group.Sum(s => (s.FCs)) / group.Sum(s => s.CuttingInQuantity)
+						 });
 
 
             var queryGroup = (from a in ( from aa in garmentCuttingOutRepository.Query
@@ -1589,130 +1591,172 @@ namespace Manufactures.Application.GarmentSample.GarmentMonitoringSampleStockFlo
 
 			GarmentMonitoringSampleStockFlowListViewModel garmentMonitoringSampleFlow = new GarmentMonitoringSampleStockFlowListViewModel();
 			List<GarmentMonitoringSampleStockFlowDto> monitoringDtos = new List<GarmentMonitoringSampleStockFlowDto>();
-
+		
             var ros = querySum.Select(x => x.ro).Distinct().ToArray();
+		 
 
-            var BasicPrices = (from a in sumbasicPrice
-                               join b in sumFCs on a.RO equals b.RO into sumFCes
-                               from bb in sumFCes.DefaultIfEmpty()
-                               //join c in queryBalance on a.RO equals c.Ro into queryBalances
-                               //from cc in queryBalances.DefaultIfEmpty()
-                               where ros.Contains(a.RO)
-                               select new
-                               {
-								   BasicPrice =
-								   //Math.Round(Convert.ToDouble(a.BasicPrice / a.Count), 2) 
-								   //* 
-								   Math.Round(Convert.ToDouble((bb.FC / bb.Count) == 0 ? Convert.ToDouble(a.BasicPrice) : Math.Round(Convert.ToDouble(a.BasicPrice / a.Count), 2)) * Convert.ToDouble(bb.FC / bb.Count), 2),
-								   realization = a.RO
-							   }).ToList();
+			var dtosPrice = (from a in querySum
+					
+						select new GarmentMonitoringSampleStockFlowDto
+						{
+							Article = a.article,
+							Ro = a.ro,
+							FC = Math.Round(Convert.ToDouble(a.fc), 2),
+							Fare = a.fare,
+							BasicPrice = Math.Round(Convert.ToDouble((from aa in sumbasicPrice where aa.RO == a.ro select aa.BasicPrice / aa.Count).FirstOrDefault()), 2) * Convert.ToDouble((from cost in sumFCs where cost.RO == a.ro select cost.FC / cost.Count).FirstOrDefault()),
+							BeginingBalanceCuttingQty = a.begining < 0 ? 0 : a.begining,
+							QtyCuttingTransfer = Math.Round(a.qtyCuttingTransfer, 2),
+							QtyCuttingsubkon = Math.Round(a.qtCuttingSubkon, 2),
+							QtyCuttingIn = Math.Round(a.qtyCuttingIn, 2),
+							QtyCuttingOut = Math.Round(a.qtycutting, 2),
+							Comodity = a.comodity,
+							AvalCutting = Math.Round(a.qtyavalcut, 2),
+							AvalSewing = Math.Round(a.qtyavalsew, 2),
+							EndBalancCuttingeQty = Math.Round(a.begining + a.qtyCuttingIn - a.qtycutting - a.qtyCuttingTransfer - a.qtCuttingSubkon - a.qtyavalcut - a.qtyavalsew, 2) < 0 ? 0 : Math.Round(a.begining + a.qtyCuttingIn - a.qtycutting - a.qtyCuttingTransfer - a.qtCuttingSubkon - a.qtyavalcut - a.qtyavalsew, 2),
+							BeginingBalanceLoadingQty = Math.Round(a.beginingloading, 2) < 0 ? 0 : Math.Round(a.beginingloading, 2),
+							QtyLoadingIn = Math.Round(a.qtyLoadingIn, 2),
+							QtyLoadingInTransfer = Math.Round(a.qtyloadingInTransfer, 2),
+							QtyLoading = Math.Round(a.qtyloading, 2),
+							QtyLoadingAdjs = Math.Round(a.qtyLoadingAdj, 2),
+							EndBalanceLoadingQty = (Math.Round(a.beginingloading + a.qtyLoadingIn + a.qtyloadingInTransfer - a.qtyloading - a.qtyLoadingAdj, 2)) < 0 ? 0 : (Math.Round(a.beginingloading + a.qtyLoadingIn + a.qtyloadingInTransfer - a.qtyloading - a.qtyLoadingAdj, 2)),
+							BeginingBalanceSewingQty = Math.Round(a.beginingSewing, 2),
+							QtySewingIn = Math.Round(a.sewingIn, 2),
+							QtySewingOut = Math.Round(a.sewingout, 2),
+							QtySewingInTransfer = Math.Round(a.sewingintransfer, 2),
+							QtySewingRetur = Math.Round(a.sewingretur, 2),
+							WipSewingOut = Math.Round(a.wipsewing, 2),
+							WipFinishingOut = Math.Round(a.wipfinishing, 2),
+							QtySewingAdj = Math.Round(a.sewingadj, 2),
+							EndBalanceSewingQty = Math.Round(a.beginingSewing + a.sewingIn - a.sewingout + a.sewingintransfer - a.wipsewing - a.wipfinishing - a.sewingretur - a.sewingadj, 2),
+							BeginingBalanceFinishingQty = Math.Round(a.beginingbalanceFinishing, 2),
+							FinishingInExpenditure = Math.Round(a.finishingout + a.subconout, 2),
+							FinishingInQty = Math.Round(a.finishingin, 2),
+							FinishingOutQty = Math.Round(a.finishingout, 2),
+							BeginingBalanceSubconQty = Math.Round(a.beginingbalancesubcon, 2),
+							SubconInQty = Math.Round(a.subconIn, 2),
+							SubconOutQty = Math.Round(a.subconout, 2),
+							EndBalanceSubconQty = Math.Round(a.beginingbalancesubcon + a.subconIn - a.subconout, 2),
+							FinishingInTransferQty = Math.Round(a.finishingintransfer, 2),
+							FinishingReturQty = Math.Round(a.finishinigretur, 2),
+							FinishingAdjQty = Math.Round(a.finishingadj, 2),
+							BeginingBalanceExpenditureGood = Math.Round(a.beginingBalanceExpenditureGood, 2),
+							EndBalanceFinishingQty = Math.Round(a.beginingbalanceFinishing + a.finishingin + a.finishingintransfer - a.finishingout - a.finishingadj - a.finishinigretur, 2),
+							ExportQty = Math.Round(a.exportQty, 2),
+							SampleQty = Math.Round(a.sampleQty, 2),
+							MDQty = Math.Round(a.mdQty, 2),
+							OtherQty = Math.Round(a.otherqty, 2),
+							ExpenditureGoodAdj = Math.Round(a.expendAdj, 2),
+							ExpenditureGoodRetur = Math.Round(a.expendRetur, 2),
+							ExpenditureGoodInTransfer = Math.Round(a.expenditureInTransfer, 2),
+							EndBalanceExpenditureGood = Math.Round(a.beginingBalanceExpenditureGood + a.finishingout + a.subconout + a.expendRetur + a.expenditureInTransfer - a.exportQty - a.otherqty - a.sampleQty - a.mdQty, 2),
+							
+								}).ToList();
 
-            var dtos = (from a in querySum
-                        join b in BasicPrices on a.ro equals b.realization
+
+			var dtos = (from a in dtosPrice
+					 
                         select new GarmentMonitoringSampleStockFlowDto
                         {
-                            Article = a.article,
-                            Ro = a.ro,
-                            FC = Math.Round(Convert.ToDouble(a.fc), 2),
-                            Fare = a.fare,
-                            BasicPrice = b.BasicPrice,
+                            Article = a.Article,
+                            Ro = a.Ro,
+                            FC = Math.Round(Convert.ToDouble(a.FC), 2),
+                            Fare = a.Fare,
+                            BasicPrice = Convert.ToDouble( a.BasicPrice),
 
-                            BeginingBalanceCuttingQty = a.begining < 0 ? 0 : a.begining,
-                            BeginingBalanceCuttingPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.begining, 2) < 0 ? 0 : Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.begining, 2),
-                            QtyCuttingTransfer = Math.Round(a.qtyCuttingTransfer, 2),
-                            PriceCuttingTransfer = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtyCuttingTransfer, 2),
-                            QtyCuttingsubkon = Math.Round(a.qtCuttingSubkon, 2),
-                            PriceCuttingsubkon = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtCuttingSubkon, 2),
-                            QtyCuttingIn = Math.Round(a.qtyCuttingIn, 2),
-                            PriceCuttingIn = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtyCuttingIn, 2),
-                            QtyCuttingOut = Math.Round(a.qtycutting, 2),
-                            PriceCuttingOut = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtycutting, 2),
-                            Comodity = a.comodity,
-                            AvalCutting = Math.Round(a.qtyavalcut, 2),
-                            AvalCuttingPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtyavalcut, 2),
-                            AvalSewing = Math.Round(a.qtyavalsew, 2),
-                            AvalSewingPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtyavalsew, 2),
-                            EndBalancCuttingeQty = Math.Round(a.begining + a.qtyCuttingIn - a.qtycutting - a.qtyCuttingTransfer - a.qtCuttingSubkon - a.qtyavalcut - a.qtyavalsew, 2) < 0 ? 0 : Math.Round(a.begining + a.qtyCuttingIn - a.qtycutting - a.qtyCuttingTransfer - a.qtCuttingSubkon - a.qtyavalcut - a.qtyavalsew, 2),
-                            EndBalancCuttingePrice = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * (a.begining + a.qtyCuttingIn - a.qtycutting - a.qtyCuttingTransfer - a.qtCuttingSubkon - a.qtyavalcut - a.qtyavalsew), 2) < 0 ? 0 : Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * (a.begining + a.qtyCuttingIn - a.qtycutting - a.qtyCuttingTransfer - a.qtCuttingSubkon - a.qtyavalcut - a.qtyavalsew), 2),
-                            BeginingBalanceLoadingQty = Math.Round(a.beginingloading, 2) < 0 ? 0 : Math.Round(a.beginingloading, 2),
-                            BeginingBalanceLoadingPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.beginingloading, 2) < 0 ? 0 : Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.beginingloading, 2),
-                            QtyLoadingIn = Math.Round(a.qtyLoadingIn, 2),
-                            PriceLoadingIn = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtyLoadingIn, 2),
-                            QtyLoadingInTransfer = Math.Round(a.qtyloadingInTransfer, 2),
-                            PriceLoadingInTransfer = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtyloadingInTransfer, 2),
-                            QtyLoading = Math.Round(a.qtyloading, 2),
-                            PriceLoading = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtyloading, 2),
-                            QtyLoadingAdjs = Math.Round(a.qtyLoadingAdj, 2),
-                            PriceLoadingAdjs = Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * a.qtyLoadingAdj, 2),
-                            EndBalanceLoadingQty = (Math.Round(a.beginingloading + a.qtyLoadingIn + a.qtyloadingInTransfer - a.qtyloading - a.qtyLoadingAdj, 2)) < 0 ? 0 : (Math.Round(a.beginingloading + a.qtyLoadingIn + a.qtyloadingInTransfer - a.qtyloading - a.qtyLoadingAdj, 2)),
-                            EndBalanceLoadingPrice = (Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * (a.beginingloading + a.qtyLoadingIn + a.qtyloadingInTransfer - a.qtyloading - a.qtyLoadingAdj), 2)) < 0 ? 0 : (Math.Round(((Convert.ToDouble(a.fare) * 0.25) + b.BasicPrice) * (a.beginingloading + a.qtyLoadingIn + a.qtyloadingInTransfer - a.qtyloading - a.qtyLoadingAdj), 2)),
-                            BeginingBalanceSewingQty = Math.Round(a.beginingSewing, 2),
-                            BeginingBalanceSewingPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * a.beginingSewing, 2),
-                            QtySewingIn = Math.Round(a.sewingIn, 2),
-                            PriceSewingIn = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * a.sewingIn, 2),
-                            QtySewingOut = Math.Round(a.sewingout, 2),
-                            PriceSewingOut = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * a.sewingout, 2),
-                            QtySewingInTransfer = Math.Round(a.sewingintransfer, 2),
-                            PriceSewingInTransfer = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * a.sewingintransfer, 2),
-                            QtySewingRetur = Math.Round(a.sewingretur, 2),
-                            PriceSewingRetur = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * a.sewingretur, 2),
-                            WipSewingOut = Math.Round(a.wipsewing, 2),
-                            WipSewingOutPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * a.wipsewing, 2),
-                            WipFinishingOut = Math.Round(a.wipfinishing, 2),
-                            WipFinishingOutPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * a.wipfinishing, 2),
-                            QtySewingAdj = Math.Round(a.sewingadj, 2),
-                            PriceSewingAdj = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * a.sewingadj, 2),
-                            EndBalanceSewingQty = Math.Round(a.beginingSewing + a.sewingIn - a.sewingout + a.sewingintransfer - a.wipsewing - a.wipfinishing - a.sewingretur - a.sewingadj, 2),
-                            EndBalanceSewingPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.5) + b.BasicPrice) * Math.Round(a.beginingSewing + a.sewingIn - a.sewingout + a.sewingintransfer - a.wipsewing - a.wipfinishing - a.sewingretur - a.sewingadj, 2), 2),
-                            BeginingBalanceFinishingQty = Math.Round(a.beginingbalanceFinishing, 2),
-                            BeginingBalanceFinishingPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.beginingbalanceFinishing, 2),
-                            FinishingInExpenditure = Math.Round(a.finishingout + a.subconout, 2),
-                            FinishingInExpenditurepPrice = Math.Round((((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.finishingout) + (((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.subconout), 2),
-                            FinishingInQty = Math.Round(a.finishingin, 2),
-                            FinishingInPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.finishingin, 2),
-                            FinishingOutQty = Math.Round(a.finishingout, 2),
-                            FinishingOutPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.finishingout, 2),
-                            BeginingBalanceSubconQty = Math.Round(a.beginingbalancesubcon, 2),
-                            BeginingBalanceSubconPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.beginingbalancesubcon, 2),
-                            SubconInQty = Math.Round(a.subconIn, 2),
-                            SubconInPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.subconIn, 2),
-                            SubconOutQty = Math.Round(a.subconout, 2),
-                            SubconOutPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.subconout, 2),
-                            EndBalanceSubconQty = Math.Round(a.beginingbalancesubcon + a.subconIn - a.subconout, 2),
-                            EndBalanceSubconPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * (a.beginingbalancesubcon + a.subconIn - a.subconout), 2),
-                            FinishingInTransferQty = Math.Round(a.finishingintransfer, 2),
-                            FinishingInTransferPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.finishingintransfer, 2),
-                            FinishingReturQty = Math.Round(a.finishinigretur, 2),
-                            FinishingReturPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.finishinigretur, 2),
-                            FinishingAdjQty = Math.Round(a.finishingadj, 2),
-                            FinishingAdjPRice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * a.finishingadj, 2),
-                            BeginingBalanceExpenditureGood = Math.Round(a.beginingBalanceExpenditureGood, 2),
-                            BeginingBalanceExpenditureGoodPrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * a.beginingBalanceExpenditureGood, 2),
-                            EndBalanceFinishingQty = Math.Round(a.beginingbalanceFinishing + a.finishingin + a.finishingintransfer - a.finishingout - a.finishingadj - a.finishinigretur, 2),
-                            EndBalanceFinishingPrice = Math.Round(((Convert.ToDouble(a.fare) * 0.75) + b.BasicPrice) * (a.beginingbalanceFinishing + a.finishingin + a.finishingintransfer - a.finishingout - a.finishingadj - a.finishinigretur), 2),
-                            ExportQty = Math.Round(a.exportQty, 2),
-                            ExportPrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * a.exportQty, 2),
-                            SampleQty = Math.Round(a.sampleQty, 2),
-                            SamplePrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * a.sampleQty, 2),
-							MDQty = Math.Round(a.mdQty, 2),
-							MDPrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * a.mdQty, 2),
-							OtherQty = Math.Round(a.otherqty, 2),
-                            OtherPrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * a.otherqty, 2),
-                            ExpenditureGoodAdj = Math.Round(a.expendAdj, 2),
-                            ExpenditureGoodAdjPrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * a.expendAdj, 2),
-                            ExpenditureGoodRetur = Math.Round(a.expendRetur, 2),
-                            ExpenditureGoodReturPrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * a.expendRetur, 2),
-                            ExpenditureGoodInTransfer = Math.Round(a.expenditureInTransfer, 2),
-                            ExpenditureGoodInTransferPrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * a.expenditureInTransfer, 2),
-                            EndBalanceExpenditureGood = Math.Round(a.beginingBalanceExpenditureGood + a.finishingout + a.subconout + a.expendRetur + a.expenditureInTransfer - a.exportQty - a.otherqty - a.sampleQty - a.mdQty, 2),
-                            EndBalanceExpenditureGoodPrice = Math.Round(((Convert.ToDouble(a.fare)) + b.BasicPrice) * (a.beginingBalanceExpenditureGood + a.finishingout + a.subconout + a.expendRetur + a.expenditureInTransfer - a.exportQty - a.otherqty - a.sampleQty - a.mdQty), 2),
-                            FareNew = a.farenew,
-                            CuttingNew = Math.Round(a.farenew * Convert.ToDecimal(a.begining + a.qtyCuttingIn - a.qtycutting - a.qtyCuttingTransfer - a.qtCuttingSubkon - a.qtyavalcut - a.qtyavalsew), 2),
-                            LoadingNew = Math.Round(a.farenew * Convert.ToDecimal(a.beginingloading + a.qtyLoadingIn - a.qtyloading - a.qtyLoadingAdj), 2),
-                            SewingNew = Math.Round(a.farenew * Convert.ToDecimal(a.beginingSewing + a.sewingIn - a.sewingout + a.sewingintransfer - a.wipsewing - a.wipfinishing - a.sewingretur - a.sewingadj), 2),
-                            FinishingNew = Math.Round(a.farenew * Convert.ToDecimal(a.beginingbalanceFinishing + a.finishingin + a.finishingintransfer - a.finishingout - a.finishingadj - a.finishinigretur), 2),
-                            ExpenditureNew = Math.Round(a.farenew * Convert.ToDecimal(a.beginingBalanceExpenditureGood + a.finishingout + a.subconout + a.expendRetur + a.expenditureInTransfer - a.exportQty - a.otherqty - a.sampleQty - a.expendAdj), 2),
-                            SubconNew = Math.Round(a.farenew * Convert.ToDecimal(a.beginingbalancesubcon + a.subconIn - a.subconout), 2)
+                            BeginingBalanceCuttingQty = a.BeginingBalanceCuttingQty < 0 ? 0 : a.BeginingBalanceCuttingQty,
+                            BeginingBalanceCuttingPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.BeginingBalanceCuttingQty, 2) < 0 ? 0 : Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.BeginingBalanceCuttingQty, 2),
+                            QtyCuttingTransfer = Math.Round(a.QtyCuttingTransfer, 2),
+                            PriceCuttingTransfer = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.QtyCuttingTransfer, 2),
+                            QtyCuttingsubkon = Math.Round(a.QtyCuttingsubkon, 2),
+                            PriceCuttingsubkon = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.QtyCuttingsubkon, 2),
+                            QtyCuttingIn = Math.Round(a.QtyCuttingIn, 2),
+                            PriceCuttingIn = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.QtyCuttingIn, 2),
+                            QtyCuttingOut = Math.Round(a.QtyCuttingOut, 2),
+                            PriceCuttingOut = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.QtyCuttingOut, 2),
+                            Comodity = a.Comodity,
+                            AvalCutting = Math.Round(a.AvalCutting, 2),
+                            AvalCuttingPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.AvalCutting, 2),
+                            AvalSewing = Math.Round(a.AvalSewing, 2),
+                            AvalSewingPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.AvalSewing, 2),
+                            EndBalancCuttingeQty = Math.Round(a.BeginingBalanceCuttingQty + a.QtyCuttingIn - a.QtyCuttingIn - a.QtyCuttingTransfer - a.QtyCuttingsubkon - a.AvalCutting - a.AvalSewing, 2) < 0 ? 0 : Math.Round(a.BeginingBalanceCuttingQty + a.QtyCuttingIn - a.QtyCuttingIn - a.QtyCuttingTransfer - a.QtyCuttingsubkon - a.AvalCutting - a.AvalSewing, 2),
+                            EndBalancCuttingePrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * (a.BeginingBalanceCuttingQty + a.QtyCuttingIn - a.QtyCuttingIn - a.QtyCuttingTransfer - a.QtyCuttingsubkon - a.AvalCutting - a.AvalSewing), 2) < 0 ? 0 : Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * (a.BeginingBalanceCuttingQty + a.QtyCuttingIn - a.QtyCuttingIn - a.QtyCuttingTransfer - a.QtyCuttingsubkon - a.AvalCutting - a.AvalSewing), 2),
+                            BeginingBalanceLoadingQty = Math.Round(a.BeginingBalanceLoadingQty, 2) < 0 ? 0 : Math.Round(a.BeginingBalanceLoadingQty, 2),
+                            BeginingBalanceLoadingPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.BeginingBalanceLoadingQty, 2) < 0 ? 0 : Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.BeginingBalanceLoadingQty, 2),
+                            QtyLoadingIn = Math.Round(a.QtyLoadingIn, 2),
+                            PriceLoadingIn = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.QtyLoadingIn, 2),
+                            QtyLoadingInTransfer = Math.Round(a.QtyLoadingInTransfer, 2),
+                            PriceLoadingInTransfer = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.QtyLoadingInTransfer, 2),
+                            QtyLoading = Math.Round(a.QtyLoading, 2),
+                            PriceLoading = Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * a.QtyLoading, 2),
+                            EndBalanceLoadingQty = (Math.Round(a.BeginingBalanceLoadingQty + a.QtyLoadingIn + a.QtyLoadingInTransfer - a.QtyLoading , 2)) < 0 ? 0 : (Math.Round(a.BeginingBalanceLoadingQty + a.QtyLoadingIn + a.QtyLoadingInTransfer - a.QtyLoading, 2)),
+                            EndBalanceLoadingPrice = (Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * (a.BeginingBalanceLoadingQty + a.QtyLoadingIn + a.QtyLoadingInTransfer - a.QtyLoading), 2)) < 0 ? 0 : (Math.Round(((Convert.ToDouble(a.Fare) * 0.25) + Convert.ToDouble( a.BasicPrice)) * (a.BeginingBalanceLoadingQty + a.QtyLoadingIn + a.QtyLoadingInTransfer - a.QtyLoading ), 2)),
+                            BeginingBalanceSewingQty = Math.Round(a.BeginingBalanceSewingQty, 2),
+                            BeginingBalanceSewingPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * a.BeginingBalanceSewingQty, 2),
+                            QtySewingIn = Math.Round(a.QtySewingIn, 2),
+                            PriceSewingIn = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * a.QtySewingIn, 2),
+                            QtySewingOut = Math.Round(a.QtySewingOut, 2),
+                            PriceSewingOut = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * a.QtySewingOut, 2),
+                            QtySewingInTransfer = Math.Round(a.QtySewingInTransfer, 2),
+                            PriceSewingInTransfer = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * a.QtySewingInTransfer, 2),
+                            QtySewingRetur = Math.Round(a.QtySewingRetur, 2),
+                            PriceSewingRetur = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * a.QtySewingRetur, 2),
+                            WipSewingOut = Math.Round(a.WipSewingOut, 2),
+                            WipSewingOutPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * a.WipSewingOut, 2),
+                            WipFinishingOut = Math.Round(a.WipFinishingOut, 2),
+                            WipFinishingOutPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * a.WipFinishingOut, 2),
+                            QtySewingAdj = Math.Round(a.QtySewingAdj, 2),
+                            PriceSewingAdj = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * a.QtySewingAdj, 2),
+                            EndBalanceSewingQty = Math.Round(a.BeginingBalanceSewingQty + a.QtySewingIn - a.QtySewingOut + a.QtySewingInTransfer - a.WipSewingOut - a.WipFinishingOut - a.QtySewingRetur - a.QtySewingAdj, 2),
+                            EndBalanceSewingPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.5) + Convert.ToDouble( a.BasicPrice)) * Math.Round(a.BeginingBalanceSewingQty + a.QtySewingIn - a.QtySewingOut + a.QtySewingInTransfer - a.WipSewingOut - a.WipFinishingOut - a.QtySewingRetur - a.QtySewingAdj, 2), 2),
+                            BeginingBalanceFinishingQty = Math.Round(a.BeginingBalanceFinishingQty, 2),
+                            BeginingBalanceFinishingPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.BeginingBalanceFinishingQty, 2),
+                            FinishingInExpenditure = Math.Round(a.FinishingOutQty + a.SubconOutQty, 2),
+                            FinishingInExpenditurepPrice = Math.Round((((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.FinishingOutQty) + (((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.SubconOutQty), 2),
+                            FinishingInQty = Math.Round(a.FinishingInQty, 2),
+                            FinishingInPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.FinishingInQty, 2),
+                            FinishingOutQty = Math.Round(a.FinishingOutQty, 2),
+                            FinishingOutPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.FinishingOutQty, 2),
+                            BeginingBalanceSubconQty = Math.Round(a.BeginingBalanceSubconQty, 2),
+                            BeginingBalanceSubconPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.BeginingBalanceSubconQty, 2),
+                            SubconInQty = Math.Round(a.SubconInQty, 2),
+                            SubconInPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.SubconInQty, 2),
+                            SubconOutQty = Math.Round(a.SubconOutQty, 2),
+                            SubconOutPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.SubconOutQty, 2),
+                            EndBalanceSubconQty = Math.Round(a.BeginingBalanceSubconQty + a.SubconInQty - a.SubconOutQty, 2),
+                            EndBalanceSubconPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * (a.BeginingBalanceSubconQty + a.SubconInQty - a.SubconOutQty), 2),
+                            FinishingInTransferQty = Math.Round(a.FinishingInTransferQty, 2),
+                            FinishingInTransferPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.FinishingInTransferQty, 2),
+                            FinishingReturQty = Math.Round(a.FinishingReturQty, 2),
+                            FinishingReturPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.FinishingReturQty, 2),
+                            FinishingAdjQty = Math.Round(a.FinishingAdjQty, 2),
+                            FinishingAdjPRice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * a.FinishingAdjQty, 2),
+                            BeginingBalanceExpenditureGood = Math.Round(a.BeginingBalanceExpenditureGood, 2),
+                            BeginingBalanceExpenditureGoodPrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * a.BeginingBalanceExpenditureGood, 2),
+                            EndBalanceFinishingQty = Math.Round(a.BeginingBalanceFinishingQty + a.FinishingInQty + a.FinishingInTransferQty - a.FinishingOutQty - a.FinishingAdjQty - a.FinishingReturQty, 2),
+                            EndBalanceFinishingPrice = Math.Round(((Convert.ToDouble(a.Fare) * 0.75) + Convert.ToDouble( a.BasicPrice)) * (a.BeginingBalanceFinishingQty + a.FinishingInQty + a.FinishingInTransferQty - a.FinishingOutQty - a.FinishingAdjQty - a.FinishingReturQty), 2),
+                            ExportQty = Math.Round(a.ExportQty, 2),
+                            ExportPrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * a.ExportQty, 2),
+                            SampleQty = Math.Round(a.SampleQty, 2),
+                            SamplePrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * a.SampleQty, 2),
+							MDQty = Math.Round(a.MDQty, 2),
+							MDPrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * a.MDQty, 2),
+							OtherQty = Math.Round(a.OtherQty, 2),
+                            OtherPrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * a.OtherQty, 2),
+                            ExpenditureGoodAdj = Math.Round(a.ExpenditureGoodAdj, 2),
+                            ExpenditureGoodAdjPrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * a.ExpenditureGoodAdj, 2),
+                            ExpenditureGoodRetur = Math.Round(a.ExpenditureGoodRetur, 2),
+                            ExpenditureGoodReturPrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * a.ExpenditureGoodRetur, 2),
+                            ExpenditureGoodInTransfer = Math.Round(a.ExpenditureGoodInTransfer, 2),
+                            ExpenditureGoodInTransferPrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * a.ExpenditureGoodInTransfer, 2),
+                            EndBalanceExpenditureGood = Math.Round(a.BeginingBalanceExpenditureGood + a.FinishingOutQty + a.SubconOutQty + a.ExpenditureGoodRetur + a.ExpenditureGoodInTransfer - a.ExportQty - a.OtherQty - a.SampleQty - a.MDQty, 2),
+                            EndBalanceExpenditureGoodPrice = Math.Round(((Convert.ToDouble(a.Fare)) + Convert.ToDouble( a.BasicPrice)) * (a.BeginingBalanceExpenditureGood + a.FinishingOutQty + a.SubconOutQty + a.ExpenditureGoodRetur + a.ExpenditureGoodInTransfer - a.ExportQty - a.OtherQty - a.SampleQty - a.MDQty), 2),
+                            FareNew = a.FareNew,
+                            CuttingNew = Math.Round(a.FareNew * Convert.ToDecimal(a.BeginingBalanceCuttingQty + a.QtyCuttingIn - a.QtyCuttingOut - a.QtyCuttingTransfer - a.QtyCuttingsubkon - a.AvalCutting - a.AvalSewing), 2),
+                            LoadingNew = Math.Round(a.FareNew * Convert.ToDecimal(a.BeginingBalanceLoadingQty + a.QtyLoadingIn - a.QtyLoading - a.QtyLoadingAdjs), 2),
+                            SewingNew = Math.Round(a.FareNew * Convert.ToDecimal(a.BeginingBalanceSewingQty + a.QtySewingIn - a.QtySewingOut + a.QtySewingInTransfer - a.WipSewingOut - a.WipFinishingOut - a.QtySewingRetur - a.QtySewingAdj), 2),
+							FinishingNew = Math.Round(a.FareNew * Convert.ToDecimal(a.BeginingBalanceFinishingQty + a.FinishingInQty + a.FinishingInTransferQty - a.FinishingOutQty - a.FinishingAdjQty - a.FinishingReturQty), 2),
+							ExpenditureNew = Math.Round(a.FareNew * Convert.ToDecimal(a.BeginingBalanceExpenditureGood + a.FinishingOutQty + a.SubconOutQty + a.ExpenditureGoodRetur + a.ExpenditureGoodInTransfer - a.ExportQty - a.OtherQty - a.SampleQty - a.ExpenditureGoodAdj), 2),
+                            SubconNew = Math.Round(a.FareNew * Convert.ToDecimal(a.BeginingBalanceSubconQty + a.SubconInQty - a.SubconOutQty), 2)
                         }).ToList();
 
  
